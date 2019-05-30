@@ -1,0 +1,22 @@
+---
+title: "Outline"
+author: "Charlotte Roiger"
+date: "5/30/2019"
+output: html_document
+---
+
+I. Introduction
+  A. Motivation
+  B. Other current work
+
+II. Methods
+  A. Pre-Hough Processing
+    - Convert to cimg
+    - Canny Edge Detection
+  B. Hough Process and Groove Selection
+    - Implement Hough transform
+    - 
+
+III. Results
+  A. Many Pictures
+  
