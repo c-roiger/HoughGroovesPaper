@@ -15,11 +15,10 @@ houston.bar1 <- data.frame(file.names = files) %>%
   }))
 
 bullets <- houston.bar1 %>% mutate(
-  ccdata = x3p %>% purrr::map(.f = x3p_to_df)
+  ccdata = x3p %>% purrr::map(.f = x3p_to_df),
+  x3p = x3p %>% purrr::map(.f = y_flip_x3p)
 )
 
-bullets <- bullets %>%
-  mutate(x3p = x3p %>% purrr::map(.f = y_flip_x3p))
 
 
 
@@ -56,9 +55,9 @@ plot(strong.b1.l1)
 dev.off()
 
 ### Create image with hough lines
-df.strong.b1.l1 <- hough_line(strong.b1.l1, ntheta = 20, data.frame = TRUE)
+df.strong.b1.l1 <- hough_line(strong.b1.l1, data.frame = TRUE)
 
-png("images/Houston_BarrelF_Bullet1_Hough.png")
+png("images/Houston_BarrelF_Bullet1_Hough_Bin100.png")
 plot(strong.b1.l1)
 with(subset(df.strong.b1.l1,score > quantile(score, .999) & (theta < pi/4)) ,nfline(theta,rho,col="red"))
 dev.off()
