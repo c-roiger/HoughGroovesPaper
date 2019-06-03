@@ -35,6 +35,13 @@
 
 v bad
 
+- Did not do full canny edge detection did not make a difference only increased processing time for groove identification
+
+- Show plots with more thetas show difference between break off with only grooves
+
+- transpose so that the top is bottom
+
+
 In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unforunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be "strong", meaning they have a magnitude above the 99th percentile. Once completed we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 800. DO I NEED TO TALK ABOUT WHAT HOUGH TRANSFORMS ARE. 
 
 Once Hough lines are calculated we select only the lines that have scores greater than the $99.9^{th}$ percentile to try and ensure that we are dealing with only the strongest edges and do not accidentally pick up on any particularly strong striae on the LEAs. We also make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. Therefore we select only the Hough lines that have angles from the positive x-axis less than $\frac{pi}{4}$. The parametrization outputted by `` \texttt{hough\char`_lines}" is of the form:

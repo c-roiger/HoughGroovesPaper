@@ -44,6 +44,6 @@ Once Hough lines are calculated we select only the lines that have scores greate
 $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 \end{center}
 
-Which requires a reparametrization in order to be used for groove identification. Thus we calculate the x and y intercept, the slope, and the average x-value of each Hough line. To determine which Hough line is the boundary of each GEA we rely on the assumption that 
+Which requires a reparametrization in order to be used for groove identification. Thus we calculate the x and y intercept, the slope, and the average x-value of each Hough line. To determine which Hough line is the boundary of each GEA we rely on the assumption that the middle two thirds of each bullet scan is often part of the LEA. Therefore, we find the x-intercept of the lower and upper one sixth of our bullet scan then compare these boundaries to each Hough Line. The Hough lines whose average x values are the smallest distance from the x-intercept of the lower and upper one sixth of our bullet scan are defined to be the the start of our groove locations. 
 
 \end{document}
