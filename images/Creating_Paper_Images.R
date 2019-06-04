@@ -2,6 +2,8 @@
 library(tidyverse)
 library(x3ptools)
 library(imager)
+library(bulletxtrctr)
+library(fixedpoints)
 
 source("/Users/charlotteroiger/Documents/GitHub/bulletQuality/charlotte_code/rho_to_ab.R")
 
@@ -38,7 +40,7 @@ strong.b2.l6 <- as.cimg(bullets$x3p[[12]]$surface.matrix)
 ### Create x3p image 
 x3p_image(bullets$x3p[[1]], multiply = 2, zoom = 0.5, file = "/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/images/Houston_BarrelF_Bullet1_Land1_Scan.png")
 
-
+cimg <- as.cimg(bullets$x3p[[1]]$surface.matrix)
 ### Create cimage of scan
 png(file = "images/Houston_BarrelF_Bullet1_cimg.png", width = 600, height = 350)
 plot(as.cimg(bullets$x3p[[1]]$surface.matrix))
@@ -53,6 +55,24 @@ strong.b1.l1 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
 png(file = "images/Houston_BarrelF_Bullet1_Strong_Edge.png", width = 600, height = 350)
 plot(strong.b1.l1)
 dev.off()
+
+# With Canny Edge
+## Hysteresis
+t2 <- quantile(grad.mag, .99, na.rm = TRUE)
+t1 <- quantile(grad.mag, .8, na.rm = TRUE)
+
+weak.b1.l1 <- grad.mag %inr% c(t1,t2)
+
+overlap <- grow(strong.b1.l1, 3) & weak.b1.l1
+strong.b1.l1.new <- strong.b1.l1 | overlap
+
+expand.strong <- function(ws){
+  overlap <- grow(ws$strong, 3) & ws$weak
+  ws$strong[overlap] <- TRUE
+  ws$weak[overlap <- FALSE]
+  ws
+}
+
 
 ### Create image with hough lines
 df.strong.b1.l1 <- hough_line(strong.b1.l1, data.frame = TRUE)
@@ -87,9 +107,76 @@ bestfit <- segments %>%
 
 png("images/Houston_BarrelF_Bullet1_BestFit.png")
 plot(strong.b1.l1)
-with(bestfit, nfline(theta, rho, col = "red"))
-abline(v = lthird, col = "green")
-abline(v = uthird, col = "green")
+with(bestfit, nfline(theta, rho, col = "red", lwd = 3))
+abline(v = lthird, col = "green", lwd = 3)
+abline(v = uthird, col = "green", lwd = 3)
 dev.off()
 
+# Houstong Barrel F Bullet1 BestFit 
+#########################################################
 
+
+# Pre-prep the bullets 
+b1 <- read_bullet(urllist = hamby252demo[[1]])
+b2 <- read_bullet(urllist = hamby252demo[[2]])
+
+b1$bullet <- 1
+b2$bullet <- 2
+b1$land <- 1:6
+b2$land <- 1:6
+bullets <- rbind(b1, b2)
+
+
+bullets$x3p[[1]]$header.info$incrementY
+bullets$x3p[[1]]$header.info$incrementX
+summary(as.vector(bullets$x3p[[1]]$surface.matrix))
+
+# get hough grooves
+bullets <- bullets %>% mutate(
+  x3p = x3p %>% purrr::map(.f = rotate_x3p, 90),
+  ccdata = x3p %>% purrr::map(.f = x3p_to_df)
+)
+
+####### Land 3 images for hamby 252
+
+land3 <- bullets$ccdata[[3]]
+land3 <- df_to_x3p(land3)
+
+land3.cimg <- as.cimg(land3$surface.matrix)
+
+dx <- imgradient(land3.cimg, "x")
+dy <- imgradient(land3.cimg, "y")
+grad.mag <- sqrt(dx^2 + dy^2)
+
+strong.l3 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE )
+
+df.strong.l3 <- hough_line(strong.l3, data.frame = TRUE)
+
+df.strong.l3 <- df.strong.l3 %>%
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .999),
+         theta > (-pi/4),
+         theta < (pi/4))
+
+segments <- rho_to_ab(df = df.strong.l3)
+
+segments <- segments %>%
+  mutate(pixset.intercept = ifelse(theta==0, xintercept, (height(strong.l3) - yintercept)/slope),
+         xaverage = ifelse(theta==0, xintercept, ((0-yintercept)/slope + (height(strong.l3) - yintercept)/slope)/2))
+
+good_vertical_segs <- segments %>%
+  extract2("xaverage")
+
+lthird <- width(strong.l3)/6
+uthird <- 5*width(strong.l3)/6
+
+# Find hough line index where
+closelthird <- good_vertical_segs[which.min(abs(good_vertical_segs - lthird))]
+closeuthird <- good_vertical_segs[which.min(abs(good_vertical_segs - uthird))]
+
+png("images/Hamby_252_Bullet1_Land1_BestFit.png")
+plot(strong.l3)
+with(subset(segments, xaverage %in% c(closelthird, closeuthird)), nfline(theta, rho, col = "red", lwd = 3))
+abline(v = lthird, col = "green", lwd = 3)
+abline(v = uthird, col = "green", lwd = 3)
+dev.off()
