@@ -1,5 +1,5 @@
 \documentclass[12pt]{article}
-\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx}
+\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx,subcaption}
 
 \usepackage[thmmarks,thref]{ntheorem}
 
@@ -34,21 +34,61 @@
 \section{Methods}
 
 
-- Did not do full canny edge detection did not make a difference only increased processing time for groove identification
+In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unforunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be "strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the Canny Edge algorithm increases processing time by about 35 seconds per image and actually highlights more striae and breakoff. 
 
-- Show plots with more thetas show difference between break off with only grooves
+\begin{figure}[!ht]
+    \centering
+    \begin{subfigure}{.5\textwidth}
+      \centering
+      \includegraphics[width = .9\textwidth]{../images/Hamby252_Bullet1_Land3_Strong_edge.png}
+      \caption{Edges with magnitudes in the 99th percentile}
+      \label{fig: edge1}
+      \end{subfigure}%
+    \begin{subfigure}{.5\textwidth}
+      \centering
+      \includegraphics[width = .9\textwidth]{../images/Hamby252_Bullet1_Land3_Canny_Edge.png}
+      \caption{Edges improved with Canny edge detection}
+      \label{fig: edge2}
+      \end{subfigure}
+      \caption{Side-by-side comparison of Hamby 252 Bullet using both magnitude thresholding and Canny edge detection}
+      \label{fig: canny}
+\end{figure}
 
+As shown in Figure \ref{fig: canny} the striae in the LEA are much more pronunced than in the image with only strong edges. We wish to focus on only detecting GEAs, so detecting an increased number of striae through Canny edge detection is not useful for our algorithm. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. While changing the number of bins does not seem to effect the processing time of the Hough transform, having a larger number of bins increases the number of extraneous detected lines in the image. For example in Figure \ref{fig: hough-compare}\subref{fig: hough1} we can see that the Hough transforms with 100 bins does a perfectly aedequate job of picking up the suspected grooves of the bullet. Therefore the extra detected lines in \ref{fig: hough-compare}\subref{fig: hough2} are not used in our analysis so we chose to limit our bin number as a result.
 
-In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unforunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be "strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the severity of the difference between GEAs and LEAs is so great that Canny Edge detection only makes minute improvements to the overall image for groove detection but increases processing time. Therefore it was deemed unnecessary for identifying Grooves in this case. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. 
+\begin{figure}[!ht]
+    \centering
+      \begin{subfigure}{.5\textwidth}
+      \centering
+      \includegraphics[width = .9\textwidth]{../images/Houston_BarrelF_Bullet1_Hough_Bin100}
+      \caption{Hough Transform with 100 bins}
+      \label{fig: hough1}
+      \end{subfigure}%
+    \begin{subfigure}{.5\textwidth}
+      \centering
+      \includegraphics[width = .9\textwidth]{../images/Houston_BarrelF_Bullet1_Hough_Bin900}
+      \caption{Hough Transform with 900 bins}
+      \label{fig: hough2}
+      \end{subfigure}
+      \caption{Side-by-side comparison of Houston Barrel F Land 1 Hough Transformation. Hough lines are filtered by having scores in the 99.9th percentile, and having central angles less than $\frac{\pi}{4}$.}
+      \label{fig: hough-compare}
+\end{figure}
 
 DO I NEED TO TALK ABOUT WHAT HOUGH TRANSFORMS ARE. 
 
-Once Hough lines are calculated we select only the lines that have scores greater than the $99.9^{th}$ percentile to try and ensure that we are dealing with only the strongest edges and do not accidentally pick up on any particularly strong striae on the LEAs. We also make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. Therefore we select only the Hough lines that have angles from the positive x-axis less than $\frac{pi}{4}$. The parametrization outputted by `` \texttt{hough\char`_lines}" is of the form:
+Once Hough lines are calculated we select only the lines that have scores greater than the $99.9^{th}$ percentile to try and ensure that we are dealing with only the strongest edges and do not accidentally pick up on any particularly strong striae on the LEAs. We also make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. Therefore we select only the Hough lines that have angles from the positive x-axis less than $\frac{\pi}{4}$ and greater than $\frac{-\pi}{4}$. The parametrization outputted by `` \texttt{hough\char`_lines}" is of the form:
 
 \begin{center}
 $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 \end{center}
 
 Which requires a reparametrization in order to be used for groove identification. Thus we calculate the x and y intercept, the slope, and the average x-value of each Hough line. To determine which Hough line is the boundary of each GEA we rely on the assumption that the middle two thirds of each bullet scan is often part of the LEA. Therefore, we find the x-intercept of the lower and upper one sixth of our bullet scan then compare these boundaries to each Hough Line. The Hough lines whose average x values are the smallest distance from the x-intercept of the lower and upper one sixth of our bullet scan are defined to be the the start of our groove locations. 
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width = .9\textwidth]{../images/Hamby_252_Bullet1_Land3_BestFit}
+  \caption{Houstong Barrel F Bullet 1 middle two-thirds of the bullet land shown in green. Estimated Start of GEA shown in red}
+  \label{fig: midtwothird}
+\end{figure}
 
 \end{document}

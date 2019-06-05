@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  3 JUN 2019 13:12
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  5 JUN 2019 11:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -260,6 +260,29 @@ File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
 \Gin@req@height=\dimen117
 \Gin@req@width=\dimen118
 )
+(/usr/local/texlive/2015/texmf-dist/tex/latex/caption/subcaption.sty
+Package: subcaption 2013/02/03 v1.1-62 Sub-captions (AR)
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2013/05/02 v3.3-89 Customizing captions (AR)
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2013/05/02 v1.6-88 caption3 kernel (AR)
+Package caption3 Info: TeX engine: e-TeX on input line 57.
+\captionmargin=\dimen119
+\captionmargin@=\dimen120
+\captionwidth=\dimen121
+\caption@tempdima=\dimen122
+\caption@indent=\dimen123
+\caption@parindent=\dimen124
+\caption@hangindent=\dimen125
+)
+\c@ContinuedFloat=\count111
+Package caption Info: hyperref package is loaded.
+)
+\c@subfigure=\count112
+\c@subtable=\count113
+)
 (/usr/local/texlive/2015/texmf-dist/tex/latex/ntheorem/ntheorem.sty
 Style `ntheorem', Version 1.33 <2011/08/15>
 Package: ntheorem 2011/08/15 1.33
@@ -282,10 +305,10 @@ Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
 \theorem@framepostskip=\toks28
 \theorem@inframepreskip=\toks29
 \theorem@inframepostskip=\toks30
-\theoremindent=\dimen119
-\theorem@indent=\dimen120
-\theoremrightindent=\dimen121
-\theorem@rightindent=\dimen122
+\theoremindent=\dimen126
+\theorem@indent=\dimen127
+\theoremrightindent=\dimen128
+\theorem@rightindent=\dimen129
 \theoremheaderfont=\toks31
 \theoremseparator=\toks32
 \theoremprework=\toks33
@@ -297,15 +320,15 @@ Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
 \thm@topsep=\skip63
 \thm@topsepadd=\skip64
 Package ntheorem Info: Option `thmmarks' loaded on input line 1175.
-\c@endNonectr=\count111
-\c@currNonectr=\count112
+\c@endNonectr=\count114
+\c@currNonectr=\count115
 \mysavskip=\skip65
 Package ntheorem Info: Option `thref' loaded on input line 1175.
 \mysavskip=\skip66
 )
-\c@currsolutionctr=\count113
-\c@endsolutionctr=\count114
-\c@solution=\count115
+\c@currsolutionctr=\count116
+\c@endsolutionctr=\count117
+\c@solution=\count118
 Package hyperref Info: Option `colorlinks' set `true' on input line 13.
 
 (/Library/Frameworks/R.framework/Resources/share/texmf/tex/latex/Sweave.sty
@@ -316,11 +339,11 @@ Package: fancyvrb 2008/02/07
 
 Style option: `fancyvrb' v2.7a, with DG/SPQR fixes, and firstline=lastline fix 
 <2008/02/07> (tvz)
-\FV@CodeLineNo=\count116
+\FV@CodeLineNo=\count119
 \FV@InFile=\read1
 \FV@TabBox=\box29
-\c@FancyVerbLine=\count117
-\FV@StepNumber=\count118
+\c@FancyVerbLine=\count120
+\FV@StepNumber=\count121
 \FV@OutFile=\write3
 )
 (/usr/local/texlive/2015/texmf-dist/tex/latex/base/textcomp.sty
@@ -470,7 +493,7 @@ Package: nameref 2012/10/27 v2.43 Cross-referencing by name of section
 (/usr/local/texlive/2015/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
 Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 )
-\c@section@level=\count119
+\c@section@level=\count122
 )
 LaTeX Info: Redefining \ref on input line 27.
 LaTeX Info: Redefining \pageref on input line 27.
@@ -483,16 +506,16 @@ LaTeX Info: Redefining \nameref on input line 27.
 
 (/usr/local/texlive/2015/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count120
-\scratchdimen=\dimen123
+\scratchcounter=\count123
+\scratchdimen=\dimen130
 \scratchbox=\box31
-\nofMPsegments=\count121
-\nofMParguments=\count122
+\nofMPsegments=\count124
+\nofMParguments=\count125
 \everyMPshowfont=\toks39
-\MPscratchCnt=\count123
-\MPscratchDim=\dimen124
-\MPnumerator=\count124
-\makeMPintoPDFobject=\count125
+\MPscratchCnt=\count126
+\MPscratchDim=\dimen131
+\MPnumerator=\count127
+\makeMPintoPDFobject=\count128
 \everyMPtoPDFconversion=\toks40
 ) (/usr/local/texlive/2015/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
 Package: epstopdf-base 2010/02/09 v2.5 Base part for package epstopdf
@@ -509,29 +532,61 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-(./RoughDraft-concordance.tex)
-LaTeX Font Info:    Try loading font information for T1+aett on input line 44.
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
 
-(/usr/local/texlive/2015/texmf-dist/tex/latex/ae/t1aett.fd
-File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
-)
-LaTeX Font Info:    Try loading font information for U+msa on input line 46.
+(./RoughDraft-concordance.tex)
+<../images/Hamby252_Bullet1_Land3_Strong_edge.png, id=13, 803.0pt x 552.0625pt>
+File: ../images/Hamby252_Bullet1_Land3_Strong_edge.png Graphic file (type png)
+<use ../images/Hamby252_Bullet1_Land3_Strong_edge.png>
+Package pdftex.def Info: ../images/Hamby252_Bullet1_Land3_Strong_edge.png used 
+on input line 44.
+(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+LaTeX Font Info:    Try loading font information for U+msa on input line 47.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 46.
+LaTeX Font Info:    Try loading font information for U+msb on input line 47.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for U+rsfs on input line 46.
+LaTeX Font Info:    Try loading font information for U+rsfs on input line 47.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/jknapltx/ursfs.fd
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 )
+<../images/Hamby252_Bullet1_Land3_Canny_Edge.png, id=15, 803.0pt x 552.0625pt>
+File: ../images/Hamby252_Bullet1_Land3_Canny_Edge.png Graphic file (type png)
 
-AED: lastpage setting LastPage
+<use ../images/Hamby252_Bullet1_Land3_Canny_Edge.png>
+Package pdftex.def Info: ../images/Hamby252_Bullet1_Land3_Canny_Edge.png used o
+n input line 50.
+(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+LaTeX Font Info:    Try loading font information for T1+aett on input line 58.
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/ae/t1aett.fd
+File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
+)
+<../images/Houston_BarrelF_Bullet1_Hough_Bin100.png, id=21, 803.0pt x 552.0625p
+t>
+File: ../images/Houston_BarrelF_Bullet1_Hough_Bin100.png Graphic file (type png
+)
+ <use ../images/Houston_BarrelF_Bullet1_Hough_Bin100.png>
+Package pdftex.def Info: ../images/Houston_BarrelF_Bullet1_Hough_Bin100.png use
+d on input line 64.
+(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+
+<../images/Houston_BarrelF_Bullet1_Hough_Bin900.png, id=22, 803.0pt x 552.0625p
+t>
+File: ../images/Houston_BarrelF_Bullet1_Hough_Bin900.png Graphic file (type png
+)
+ <use ../images/Houston_BarrelF_Bullet1_Hough_Bin900.png>
+Package pdftex.def Info: ../images/Houston_BarrelF_Bullet1_Hough_Bin900.png use
+d on input line 70.
+(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+
 
 Package Fancyhdr Warning: \headheight is too small (12.0pt): 
  Make it at least 14.49998pt.
@@ -540,38 +595,53 @@ Package Fancyhdr Warning: \headheight is too small (12.0pt):
 
 [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
 
-]
+ <../images/Hamby252_Bullet1_Land3_Strong_edge.png> <../images/Hamby252_Bullet1
+_Land3_Canny_Edge.png>]
+<../images/Hamby_252_Bullet1_Land3_BestFit.png, id=40, 803.0pt x 552.0625pt>
+File: ../images/Hamby_252_Bullet1_Land3_BestFit.png Graphic file (type png)
+
+<use ../images/Hamby_252_Bullet1_Land3_BestFit.png>
+Package pdftex.def Info: ../images/Hamby_252_Bullet1_Land3_BestFit.png used on 
+input line 90.
+(pdftex.def)             Requested size: 424.82512pt x 292.07787pt.
+
+
+AED: lastpage setting LastPage
+[2 <../images/Houston_BarrelF_Bullet1_Hough_Bin100.png> <../images/Houston_Barr
+elF_Bullet1_Hough_Bin900.png>] [3 <../images/Hamby_252_Bullet1_Land3_BestFit.pn
+g>]
 \tf@thm=\write5
 \openout5 = `RoughDraft.thm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 54.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 54.
-
-(./RoughDraft.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 54.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 54.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 95.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 95.
+ (./RoughDraft.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 95.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 95.
 Package rerunfilecheck Info: File `RoughDraft.out' has not changed.
 (rerunfilecheck)             Checksum: 1F9B595ECC7195C2DB7395D500033C8B;89.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 54.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 95.
  ) 
 Here is how much of TeX's memory you used:
- 7817 strings out of 493089
- 113594 string characters out of 6134842
- 197283 words of memory out of 5000000
- 11171 multiletter control sequences out of 15000+600000
- 17215 words of font info for 50 fonts, out of 8000000 for 9000
+ 8929 strings out of 493089
+ 134489 string characters out of 6134842
+ 219649 words of memory out of 5000000
+ 12256 multiletter control sequences out of 15000+600000
+ 20280 words of font info for 56 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 35i,11n,43p,1357b,329s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 42i,11n,43p,1232b,481s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 ></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb>
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></
-usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></us
-r/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/l
-ocal/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on RoughDraft.pdf (1 page, 62640 bytes).
+usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></us
+r/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/
+local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/loc
+al/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local
+/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
+Output written on RoughDraft.pdf (3 pages, 407898 bytes).
 PDF statistics:
- 48 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
- 4 named destinations out of 1000 (max. 500000)
- 21 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 87 PDF objects out of 1000 (max. 8388607)
+ 62 compressed objects within 1 object stream
+ 9 named destinations out of 1000 (max. 500000)
+ 46 words of extra memory for PDF output out of 10000 (max. 10000000)
 

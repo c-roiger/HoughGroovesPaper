@@ -42,7 +42,7 @@ x3p_image(bullets$x3p[[1]], multiply = 2, zoom = 0.5, file = "/Users/charlottero
 
 cimg <- as.cimg(bullets$x3p[[1]]$surface.matrix)
 ### Create cimage of scan
-png(file = "images/Houston_BarrelF_Bullet1_cimg.png", width = 600, height = 350)
+png(file = "images/Houston_BarrelF_Bullet1_cimg.png", width = 800, height = 550)
 plot(as.cimg(bullets$x3p[[1]]$surface.matrix))
 dev.off()
 
@@ -52,7 +52,7 @@ dy <- imgradient(strong.b1.l1, "y")
 grad.mag <- sqrt(dx^2+dy^2)
 strong.b1.l1 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
 
-png(file = "images/Houston_BarrelF_Bullet1_Strong_Edge.png", width = 600, height = 350)
+png(file = "images/Houston_BarrelF_Bullet1_Strong_Edge.png", width = 800, height = 550)
 plot(strong.b1.l1)
 dev.off()
 
@@ -70,14 +70,25 @@ expand.strong <- function(ws){
   overlap <- grow(ws$strong, 3) & ws$weak
   ws$strong[overlap] <- TRUE
   ws$weak[overlap <- FALSE]
-  ws
+  ws 
 }
+
+hystFP <- fp(expand.strong)
+a <- Sys.time()
+out <- list(strong = strong.b1.l1, weak = weak.b1.l1) %>% hystFP
+b <- Sys.time(); b-a
+
+png(file = "images/Houston_BarrelF_Bullet1_Canny_Edge.png", width = 800, height = 550)
+plot(out$strong)
+dev.off()
+
+
 
 
 ### Create image with hough lines
 df.strong.b1.l1 <- hough_line(strong.b1.l1, data.frame = TRUE)
 
-png("images/Houston_BarrelF_Bullet1_Hough_Bin100.png")
+png("images/Houston_BarrelF_Bullet1_Hough_Bin10.png", width = 800, height = 550)
 plot(strong.b1.l1)
 with(subset(df.strong.b1.l1,score > quantile(score, .999) & (theta < pi/4)) ,nfline(theta,rho,col="red"))
 dev.off()
@@ -98,6 +109,13 @@ good_vertical_segs <- segments %>%
 lthird <- width(strong.b1.l1)/6
 uthird <- 5*width(strong.b1.l1)/6
 
+png("images/Houston_BarrelF_Bullet1_middle_twothirds.png", width = 800, height = 550)
+plot(strong.b1.l1)
+abline(v = lthird, col = "green", lwd = 3)
+abline(v = uthird, col = "green", lwd = 3)
+dev.off()
+
+
 closelthird <- good_vertical_segs[which.min(abs(good_vertical_segs - lthird))]
 closeuthird <- good_vertical_segs[which.min(abs(good_vertical_segs - uthird))]
 
@@ -105,7 +123,7 @@ closeuthird <- good_vertical_segs[which.min(abs(good_vertical_segs - uthird))]
 bestfit <- segments %>%
   filter(xaverage %in% c(closelthird, closeuthird))
 
-png("images/Houston_BarrelF_Bullet1_BestFit.png")
+png("images/Houston_BarrelF_Bullet1_BestFit.png", width = 800, height = 550)
 plot(strong.b1.l1)
 with(bestfit, nfline(theta, rho, col = "red", lwd = 3))
 abline(v = lthird, col = "green", lwd = 3)
@@ -148,9 +166,26 @@ dx <- imgradient(land3.cimg, "x")
 dy <- imgradient(land3.cimg, "y")
 grad.mag <- sqrt(dx^2 + dy^2)
 
-strong.l3 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE )
+strong.hamby.l3 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE )
 
-df.strong.l3 <- hough_line(strong.l3, data.frame = TRUE)
+png(file = "images/Hamby252_Bullet1_Land3_Strong_edge.png", width = 800, height = 550)
+plot(strong.hamby.l3)
+dev.off()
+
+weak.hamby.l3 <- grad.mag %inr% c(t1,t2)
+
+# Canny Edge With Hamby
+a <- Sys.time()
+out <- list(strong = strong.hamby.l3, weak = weak.hamby.l3) %>% hystFP
+b <- Sys.time(); b-a
+
+png(file = "images/Hamby252_Bullet1_Land3_Canny_Edge.png", width = 800, height = 550)
+plot(out$strong)
+dev.off()
+
+
+
+df.strong.l3 <- hough_line(strong.hamby.l3, data.frame = TRUE)
 
 df.strong.l3 <- df.strong.l3 %>%
   mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
@@ -161,21 +196,21 @@ df.strong.l3 <- df.strong.l3 %>%
 segments <- rho_to_ab(df = df.strong.l3)
 
 segments <- segments %>%
-  mutate(pixset.intercept = ifelse(theta==0, xintercept, (height(strong.l3) - yintercept)/slope),
-         xaverage = ifelse(theta==0, xintercept, ((0-yintercept)/slope + (height(strong.l3) - yintercept)/slope)/2))
+  mutate(pixset.intercept = ifelse(theta==0, xintercept, (height(strong.hamby.l3) - yintercept)/slope),
+         xaverage = ifelse(theta==0, xintercept, ((0-yintercept)/slope + (height(strong.hamby.l3) - yintercept)/slope)/2))
 
 good_vertical_segs <- segments %>%
   extract2("xaverage")
 
-lthird <- width(strong.l3)/6
-uthird <- 5*width(strong.l3)/6
+lthird <- width(strong.hamby.l3)/6
+uthird <- 5*width(strong.hamby.l3)/6
 
 # Find hough line index where
 closelthird <- good_vertical_segs[which.min(abs(good_vertical_segs - lthird))]
 closeuthird <- good_vertical_segs[which.min(abs(good_vertical_segs - uthird))]
 
-png("images/Hamby_252_Bullet1_Land1_BestFit.png")
-plot(strong.l3)
+png("images/Hamby_252_Bullet1_Land3_BestFit.png", width = 800, height = 550)
+plot(strong.hamby.l3)
 with(subset(segments, xaverage %in% c(closelthird, closeuthird)), nfline(theta, rho, col = "red", lwd = 3))
 abline(v = lthird, col = "green", lwd = 3)
 abline(v = uthird, col = "green", lwd = 3)
