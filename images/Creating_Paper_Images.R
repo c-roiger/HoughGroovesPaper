@@ -86,12 +86,17 @@ dev.off()
 
 
 ### Create image with hough lines
-df.strong.b1.l1 <- hough_line(strong.b1.l1, data.frame = TRUE)
+df.strong.b1.l1 <- hough_line(strong.b1.l1, data.frame = TRUE, shift = FALSE)
+df.strong.b1.l1 <- df.strong.b1.l1 %>%
+  filter(theta > pi/4)
 
 png("images/Houston_BarrelF_Bullet1_Hough_Bin10.png", width = 800, height = 550)
 plot(strong.b1.l1)
-with(subset(df.strong.b1.l1,score > quantile(score, .999) & (theta < pi/4)) ,nfline(theta,rho,col="red"))
+with(subset(df.strong.b1.l1,score > quantile(score, .999) & (theta = (pi/2))) ,nfline(theta,rho,col="red"))
 dev.off()
+
+plot(strong.b1.l1)
+with(subset(df.strong.b1.l1, score > quantile(score, .999),  (theta  < (pi/2)), (theta > (pi/4))), nfline(theta, rho, col = "red"))
 
 ### Find Hough lines closes to the middle two thirds
 
@@ -192,6 +197,11 @@ df.strong.l3 <- df.strong.l3 %>%
   filter(score > quantile(score, .999),
          theta > (-pi/4),
          theta < (pi/4))
+
+png("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/images//Hamby_252_Bullet1_Land3_Hough.png", width = 800, height = 550)
+plot(strong.hamby.l3)
+with(df.strong.l3, nfline(theta, rho, col = "red"))
+dev.off()
 
 segments <- rho_to_ab(df = df.strong.l3)
 
