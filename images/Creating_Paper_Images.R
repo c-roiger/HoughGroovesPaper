@@ -4,6 +4,9 @@ library(x3ptools)
 library(imager)
 library(bulletxtrctr)
 library(fixedpoints)
+library(raster)
+library(rgdal)
+library(magick)
 
 source("/Users/charlotteroiger/Documents/GitHub/bulletQuality/charlotte_code/rho_to_ab.R")
 
@@ -51,6 +54,11 @@ dx <- imgradient(strong.b1.l1, "x")
 dy <- imgradient(strong.b1.l1, "y")
 grad.mag <- sqrt(dx^2+dy^2)
 strong.b1.l1 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+
+
+
+
+
 
 png(file = "images/Houston_BarrelF_Bullet1_Strong_Edge.png", width = 800, height = 550)
 plot(strong.b1.l1)
