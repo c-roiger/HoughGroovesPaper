@@ -5,10 +5,9 @@ library(imager)
 library(bulletxtrctr)
 library(fixedpoints)
 library(raster)
-library(rgdal)
-library(magick)
 
-source("/Users/charlotteroiger/Documents/GitHub/bulletQuality/charlotte_code/rho_to_ab.R")
+source("/Users/charlotteroiger/Documents/GitHub/grooveFinder/R/get_grooves_hough.R")
+source("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/geom_nfline.R")
 
 # Load in data 
 
@@ -45,9 +44,15 @@ x3p_image(bullets$x3p[[1]], multiply = 2, zoom = 0.5, file = "/Users/charlottero
 
 cimg <- as.cimg(bullets$x3p[[1]]$surface.matrix)
 ### Create cimage of scan
-png(file = "images/Houston_BarrelF_Bullet1_cimg.png", width = 800, height = 550)
-plot(as.cimg(bullets$x3p[[1]]$surface.matrix))
-dev.off()
+cimg.raster <- imager:::as.data.frame.cimg(cimg)
+ggplot() +
+  geom_raster(data = cimg.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_gradient(low = "darkgoldenrod4", high = "darkgoldenrod1") +
+  coord_fixed() +
+  guides(fill = FALSE)
+
+ggsave("images/Houston_BarrelF_Bullet1_cimg.png")
+
 
 ### post edge detection image
 dx <- imgradient(strong.b1.l1, "x")
@@ -55,14 +60,15 @@ dy <- imgradient(strong.b1.l1, "y")
 grad.mag <- sqrt(dx^2+dy^2)
 strong.b1.l1 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
 
+strong.raster <- imager:::as.data.frame.cimg(strong.b1.l1)
+ggplot() +
+  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE)
 
+ggsave("images/Houston_BarrelF_Bullet1_Strong_Edge.png")
 
-
-
-
-png(file = "images/Houston_BarrelF_Bullet1_Strong_Edge.png", width = 800, height = 550)
-plot(strong.b1.l1)
-dev.off()
 
 # With Canny Edge
 ## Hysteresis
@@ -86,25 +92,36 @@ a <- Sys.time()
 out <- list(strong = strong.b1.l1, weak = weak.b1.l1) %>% hystFP
 b <- Sys.time(); b-a
 
-png(file = "images/Houston_BarrelF_Bullet1_Canny_Edge.png", width = 800, height = 550)
-plot(out$strong)
-dev.off()
+hyst.raster <- imager:::as.data.frame.cimg(out$strong)
 
+ggplot() +
+  geom_raster(data = hyst.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE)
 
+ggsave("images/Houston_BarrelF_Bullet1_Canny_Edge.png")
 
 
 ### Create image with hough lines
 df.strong.b1.l1 <- hough_line(strong.b1.l1, data.frame = TRUE, shift = FALSE)
 df.strong.b1.l1 <- df.strong.b1.l1 %>%
-  filter(theta > pi/4)
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .999),
+         theta < (pi/4))
 
-png("images/Houston_BarrelF_Bullet1_Hough_Bin10.png", width = 800, height = 550)
-plot(strong.b1.l1)
-with(subset(df.strong.b1.l1,score > quantile(score, .999) & (theta = (pi/2))) ,nfline(theta,rho,col="red"))
-dev.off()
+ggplot()+
+  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE) +
+  geom_nfline(data = df.strong.b1.l1 , aes(theta, rho))
+
+
+ggsave("images/Houston_BarrelF_Bullet1_Hough_Bin900.png")
 
 plot(strong.b1.l1)
-with(subset(df.strong.b1.l1, score > quantile(score, .999),  (theta  < (pi/2)), (theta > (pi/4))), nfline(theta, rho, col = "red"))
+with(df.strong.b1.l1, nfline(theta, rho, col = "red"))
 
 ### Find Hough lines closes to the middle two thirds
 
@@ -122,11 +139,21 @@ good_vertical_segs <- segments %>%
 lthird <- width(strong.b1.l1)/6
 uthird <- 5*width(strong.b1.l1)/6
 
-png("images/Houston_BarrelF_Bullet1_middle_twothirds.png", width = 800, height = 550)
-plot(strong.b1.l1)
-abline(v = lthird, col = "green", lwd = 3)
-abline(v = uthird, col = "green", lwd = 3)
-dev.off()
+ggplot()+
+  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE) + 
+  geom_vline(xintercept = lthird, col = "green", lwd = 2)+
+  geom_vline(xintercept = uthird, col = "green", lwd = 2)
+
+ggsave("images/Houston_BarrelF_Bullet1_middle_twothirds.png")
+
+# png("images/Houston_BarrelF_Bullet1_middle_twothirds.png", width = 800, height = 550)
+# plot(strong.b1.l1)
+# abline(v = lthird, col = "green", lwd = 3)
+# abline(v = uthird, col = "green", lwd = 3)
+# dev.off()
 
 
 closelthird <- good_vertical_segs[which.min(abs(good_vertical_segs - lthird))]
@@ -135,6 +162,17 @@ closeuthird <- good_vertical_segs[which.min(abs(good_vertical_segs - uthird))]
 
 bestfit <- segments %>%
   filter(xaverage %in% c(closelthird, closeuthird))
+
+ggplot()+
+  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE) + 
+  geom_abline(data = bestfit,
+              aes(intercept = (rho/sin(theta)), slope = (-cos(theta)/sin(theta))), col = "red")+
+  geom_vline(xintercept = lthird, col = "green", lwd = 2)+
+  geom_vline(xintercept = uthird, col = "green", lwd = 2)
+
 
 png("images/Houston_BarrelF_Bullet1_BestFit.png", width = 800, height = 550)
 plot(strong.b1.l1)
