@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  12 JUN 2019 13:39
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  10 SEP 2019 09:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -815,12 +815,12 @@ Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: End \AtBeginDocument code.
 
 ABD: EveryShipout initializing macros (./RoughDraft-concordance.tex)
-<../images/Hamby252_Bullet1_Land3_Strong_edge.png, id=16, 803.0pt x 552.0625pt>
+<../images/Hamby252_Bullet1_Land3_Strong_edge.png, id=20, 1204.5pt x 903.375pt>
 File: ../images/Hamby252_Bullet1_Land3_Strong_edge.png Graphic file (type png)
 <use ../images/Hamby252_Bullet1_Land3_Strong_edge.png>
 Package pdftex.def Info: ../images/Hamby252_Bullet1_Land3_Strong_edge.png used 
 on input line 44.
-(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+(pdftex.def)             Requested size: 212.41255pt x 159.30602pt.
 LaTeX Font Info:    Try loading font information for U+msa on input line 47.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/amsfonts/umsa.fd
@@ -836,35 +836,35 @@ LaTeX Font Info:    Try loading font information for U+rsfs on input line 47.
 (/usr/local/texlive/2015/texmf-dist/tex/latex/jknapltx/ursfs.fd
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 )
-<../images/Hamby252_Bullet1_Land3_Canny_Edge.png, id=18, 803.0pt x 552.0625pt>
+<../images/Hamby252_Bullet1_Land3_Canny_Edge.png, id=22, 1204.5pt x 903.375pt>
 File: ../images/Hamby252_Bullet1_Land3_Canny_Edge.png Graphic file (type png)
 
 <use ../images/Hamby252_Bullet1_Land3_Canny_Edge.png>
 Package pdftex.def Info: ../images/Hamby252_Bullet1_Land3_Canny_Edge.png used o
 n input line 50.
-(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+(pdftex.def)             Requested size: 212.41255pt x 159.30602pt.
 LaTeX Font Info:    Try loading font information for T1+aett on input line 58.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/ae/t1aett.fd
 File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
 )
-<../images/Houston_BarrelF_Bullet1_Hough_Bin100.png, id=24, 803.0pt x 552.0625p
-t>
+<../images/Houston_BarrelF_Bullet1_Hough_Bin100.png, id=28, 1438.37375pt x 1283
+.79625pt>
 File: ../images/Houston_BarrelF_Bullet1_Hough_Bin100.png Graphic file (type png
 )
  <use ../images/Houston_BarrelF_Bullet1_Hough_Bin100.png>
 Package pdftex.def Info: ../images/Houston_BarrelF_Bullet1_Hough_Bin100.png use
 d on input line 64.
-(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+(pdftex.def)             Requested size: 212.41255pt x 189.58357pt.
 
-<../images/Houston_BarrelF_Bullet1_Hough_Bin900.png, id=25, 803.0pt x 552.0625p
-t>
+<../images/Houston_BarrelF_Bullet1_Hough_Bin900.png, id=29, 1438.37375pt x 1283
+.79625pt>
 File: ../images/Houston_BarrelF_Bullet1_Hough_Bin900.png Graphic file (type png
 )
  <use ../images/Houston_BarrelF_Bullet1_Hough_Bin900.png>
 Package pdftex.def Info: ../images/Houston_BarrelF_Bullet1_Hough_Bin900.png use
 d on input line 70.
-(pdftex.def)             Requested size: 212.41255pt x 146.03471pt.
+(pdftex.def)             Requested size: 212.41255pt x 189.58357pt.
 
 
 Package Fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -882,49 +882,50 @@ Overfull \hbox (2.61607pt too wide) in paragraph at lines 87--107
 
 [2 <../images/Houston_BarrelF_Bullet1_Hough_Bin100.png> <../images/Houston_Barr
 elF_Bullet1_Hough_Bin900.png>]
-<../images/Hamby_252_Bullet1_Land3_BestFit.png, id=54, 803.0pt x 552.0625pt>
+<../images/Hamby_252_Bullet1_Land3_BestFit.png, id=59, 803.0pt x 552.0625pt>
 File: ../images/Hamby_252_Bullet1_Land3_BestFit.png Graphic file (type png)
 
 <use ../images/Hamby_252_Bullet1_Land3_BestFit.png>
 Package pdftex.def Info: ../images/Hamby_252_Bullet1_Land3_BestFit.png used on 
-input line 115.
+input line 127.
 (pdftex.def)             Requested size: 424.82512pt x 292.07787pt.
 
 
 AED: lastpage setting LastPage
-[3 <../images/Hamby_252_Bullet1_Land3_BestFit.png>]
+[3] [4 <../images/Hamby_252_Bullet1_Land3_BestFit.png>]
 \tf@thm=\write6
 \openout6 = `RoughDraft.thm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 120.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 120.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 134.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 134.
  (./RoughDraft.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 120.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 120.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 134.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 134.
 Package rerunfilecheck Info: File `RoughDraft.out' has not changed.
-(rerunfilecheck)             Checksum: 1F9B595ECC7195C2DB7395D500033C8B;89.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 120.
+(rerunfilecheck)             Checksum: 6AB8D00E7B08DE57B29C8618C709C530;132.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 134.
  ) 
 Here is how much of TeX's memory you used:
- 18710 strings out of 493089
- 344595 string characters out of 6134842
- 401711 words of memory out of 5000000
- 21832 multiletter control sequences out of 15000+600000
+ 18715 strings out of 493089
+ 344642 string characters out of 6134842
+ 401712 words of memory out of 5000000
+ 21833 multiletter control sequences out of 15000+600000
  20280 words of font info for 56 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,11n,54p,1232b,785s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 55i,11n,54p,1412b,785s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 ></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb>
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></
 usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></us
 r/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/
 local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/loc
-al/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local
-/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on RoughDraft.pdf (3 pages, 409113 bytes).
+al/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/loca
+l/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/
+texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
+Output written on RoughDraft.pdf (4 pages, 335552 bytes).
 PDF statistics:
- 92 PDF objects out of 1000 (max. 8388607)
- 67 compressed objects within 1 object stream
- 10 named destinations out of 1000 (max. 500000)
- 58 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 109 PDF objects out of 1000 (max. 8388607)
+ 82 compressed objects within 1 object stream
+ 14 named destinations out of 1000 (max. 500000)
+ 66 words of extra memory for PDF output out of 10000 (max. 10000000)
 

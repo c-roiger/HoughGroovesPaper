@@ -6,7 +6,7 @@ library(bulletxtrctr)
 library(fixedpoints)
 library(raster)
 
-source("/Users/charlotteroiger/Documents/GitHub/grooveFinder/R/get_grooves_hough.R")
+source("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/rho_to_ab.R")
 source("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/geom_nfline.R")
 
 # Load in data 
@@ -42,9 +42,9 @@ strong.b2.l6 <- as.cimg(bullets$x3p[[12]]$surface.matrix)
 ### Create x3p image 
 x3p_image(bullets$x3p[[1]], multiply = 2, zoom = 0.5, file = "/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/images/Houston_BarrelF_Bullet1_Land1_Scan.png")
 
-cimg <- as.cimg(bullets$x3p[[1]]$surface.matrix)
+
 ### Create cimage of scan
-cimg.raster <- imager:::as.data.frame.cimg(cimg)
+cimg.raster <- imager:::as.data.frame.cimg(strong.b1.l1)
 ggplot() +
   geom_raster(data = cimg.raster, aes(x = x, y = -y, fill = value)) +
   scale_fill_gradient(low = "darkgoldenrod4", high = "darkgoldenrod1") +
@@ -115,8 +115,22 @@ ggplot()+
   scale_fill_manual(values = c("black", "white", "grey"))+
   coord_fixed() +
   guides(fill = FALSE) +
-  geom_nfline(data = df.strong.b1.l1 , aes(theta, rho))
+  geom_nfline(data = df.strong.b1.l1, theta, rho)
+  geom_abline(data = df.strong.b1.l1, aes(slope = -cos(theta)/sin(theta), intercept = rho/sin(theta)), col = "red")
 
+geom_nfline <- function(data, theta, rho){
+  Zero = .Machine$double.eps
+  if(abs(sin(data$theta)) <= Zero){
+    geom_vline(xintercept = data$rho, col = "red")
+  }
+  
+  else{
+    geom_abline(slope = -cos(data$theta)/sin(data$theta), intercept = -data$rho/sin(data$theta), col = "red")
+  }
+}
+
+plot(strong.b1.l1)
+with(df.strong.b1.l1, nfline(theta, rho, col = "red"))
 
 ggsave("images/Houston_BarrelF_Bullet1_Hough_Bin900.png")
 
@@ -131,9 +145,7 @@ segments <- segments %>%
          xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.b1.l1) - yintercept)/slope)/2),
          pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.b1.l1) - yintercept)/slope))
 
-good_vertical_segs <- segments %>%
-  filter(score > quantile(score, 0.9975) & theta < pi/4) %>%
-  extract2("xaverage")
+good_vertical_segs <- segments$xaverage
 
 
 lthird <- width(strong.b1.l1)/6
@@ -149,11 +161,11 @@ ggplot()+
 
 ggsave("images/Houston_BarrelF_Bullet1_middle_twothirds.png")
 
-# png("images/Houston_BarrelF_Bullet1_middle_twothirds.png", width = 800, height = 550)
-# plot(strong.b1.l1)
-# abline(v = lthird, col = "green", lwd = 3)
-# abline(v = uthird, col = "green", lwd = 3)
-# dev.off()
+png("images/Houston_BarrelF_Bullet1_middle_twothirds.png", width = 800, height = 550)
+plot(strong.b1.l1)
+abline(v = lthird, col = "green", lwd = 3)
+abline(v = uthird, col = "green", lwd = 3)
+
 
 
 closelthird <- good_vertical_segs[which.min(abs(good_vertical_segs - lthird))]
@@ -219,9 +231,16 @@ grad.mag <- sqrt(dx^2 + dy^2)
 
 strong.hamby.l3 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE )
 
-png(file = "images/Hamby252_Bullet1_Land3_Strong_edge.png", width = 800, height = 550)
-plot(strong.hamby.l3)
-dev.off()
+strong.raster <- imager:::as.data.frame.cimg(strong.hamby.l3)
+ggplot() +
+  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE)
+ggsave(filename = "images/Hamby252_Bullet1_Land3_Strong_edge.png", width = 4, height = 3, unit = "in")
+
+t2 <- quantile(grad.mag, .99, na.rm = TRUE)
+t1 <- quantile(grad.mag, .8, na.rm = TRUE)
 
 weak.hamby.l3 <- grad.mag %inr% c(t1,t2)
 
@@ -230,9 +249,15 @@ a <- Sys.time()
 out <- list(strong = strong.hamby.l3, weak = weak.hamby.l3) %>% hystFP
 b <- Sys.time(); b-a
 
-png(file = "images/Hamby252_Bullet1_Land3_Canny_Edge.png", width = 800, height = 550)
-plot(out$strong)
-dev.off()
+canny.hamby.l3 <- imager:::as.data.frame.cimg(out$strong)
+
+ggplot() +
+  geom_raster(data = canny.hamby.l3, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE)
+ggsave(filename = "images/Hamby252_Bullet1_Land3_Canny_Edge.png", width = 4, height = 3, unit = "in")
+
 
 
 

@@ -107,13 +107,18 @@ Where $\rho$ represents the length of the normalized vector between the detected
   \label{fig: parametrization}
 \end{figure}
 
-We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$. We then calculate the slope and the y-intercept in a similar fashion. To determine which Hough line is the boundary of each GEA we rely on the assumption that the middle two thirds of each bullet scan is often part of the LEA. Therefore, we find the x-intercept of the lower and upper one sixth of our bullet scan then compare these boundaries to each Hough Line. We then define the average x-value of each line to be the average x-intercept of the Hough line at an x-value of 0 and at an x-value equivalent to the number of pixels in the width of the bullet scan. The Hough lines whose average x values are the smallest distance from the x-intercept of the lower and upper one sixth of our bullet scan are defined to be the the start of our groove locations. 
+We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$. We then calculate the slope and the y-intercept in a similar fashion. To determine which Hough line is the boundary of each GEA we rely on the assumption that the middle two thirds of each bullet scan is often part of the LEA. Therefore, we find the x-intercept of the lower and upper one sixth of our bullet scan then compare these boundaries to each Hough Line. We then define the average x-value of each line to be the average x-intercept of the Hough line at an x-value of 0 and at an x-value equivalent to the number of pixels in the width of the bullet scan. The Hough lines whose average x values are the smallest distance from the x-intercept of the lower and upper one sixth of our bullet scan are defined to be the start of our groove locations. 
+
+\section{Results?}
+
+In Figure \ref{fig: bestfit1} we show both the middle two thirds of the bullet land and the estimated best fit for the grooves based on our Hough transform. 
 
 \begin{figure}[!ht]
   \centering
   \includegraphics[width = .9\textwidth]{../images/Hamby_252_Bullet1_Land3_BestFit}
   \caption{Houstong Barrel F Bullet 1 middle two-thirds of the bullet land shown in green. Estimated Start of GEA shown in red}
-  \label{fig: midtwothird}
+  \label{fig: bestfit1}
 \end{figure}
+ 
 
 \end{document}
