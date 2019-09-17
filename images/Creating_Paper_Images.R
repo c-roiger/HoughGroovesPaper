@@ -213,6 +213,7 @@ bullets$x3p[[1]]$header.info$incrementX
 summary(as.vector(bullets$x3p[[1]]$surface.matrix))
 
 # get hough grooves
+
 bullets <- bullets %>% mutate(
   x3p = x3p %>% purrr::map(.f = rotate_x3p, 90),
   ccdata = x3p %>% purrr::map(.f = x3p_to_df)

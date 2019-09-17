@@ -1,0 +1,296 @@
+---
+title: "Creating Paper Images"
+author: "Charlotte Roiger"
+date: "6/19/2019"
+output: html_document
+---
+
+```{r}
+# Load in libraries
+library(tidyverse)
+library(x3ptools)
+library(imager)
+library(bulletxtrctr)
+library(fixedpoints)
+library(raster)
+
+# Source in geom_nflines
+source("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/geom_nfline.R")
+
+source("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/rho_to_ab.R")
+
+```
+
+```{r}
+# Load in Houston Data
+
+# Load in data 
+
+files <- list.files( "/Users/charlotteroiger/Documents/CSAFE_bullet_quality/data/Houston_barf/", pattern = "*.x3p", full.names = T, recursive = T)
+
+houston.bar1 <- data.frame(file.names = files) %>%
+  mutate(x3p = purrr::map(as.character(file.names), .f = function(file.names){
+    x3ptools::read_x3p(file.names)
+  }))
+
+bullets <- houston.bar1 %>% mutate(
+  ccdata = x3p %>% purrr::map(.f = x3p_to_df),
+  x3p = x3p %>% purrr::map(.f = y_flip_x3p)
+)
+
+# Start manual process of each land
+
+strong.b1.l1 <- as.cimg(bullets$x3p[[1]]$surface.matrix)
+strong.b1.l2 <- as.cimg(bullets$x3p[[2]]$surface.matrix)
+strong.b1.l3 <- as.cimg(bullets$x3p[[3]]$surface.matrix)
+strong.b1.l4 <- as.cimg(bullets$x3p[[4]]$surface.matrix)
+strong.b1.l5 <- as.cimg(bullets$x3p[[5]]$surface.matrix)
+strong.b1.l6 <- as.cimg(bullets$x3p[[6]]$surface.matrix)
+
+```
+
+```{r}
+# Create strong raster images
+
+# Land 1
+dx <- imgradient(strong.b1.l1, "x")
+dy <- imgradient(strong.b1.l1, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+strong.b1.l1 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+strong.raster.l1 <- imager:::as.data.frame.cimg(strong.b1.l1)
+
+# Land 2
+dx <- imgradient(strong.b1.l2, "x")
+dy <- imgradient(strong.b1.l2, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+strong.b1.l2 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+strong.raster.l2 <- imager:::as.data.frame.cimg(strong.b1.l2)
+
+# Land 3
+dx <- imgradient(strong.b1.l3, "x")
+dy <- imgradient(strong.b1.l3, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+strong.b1.l3 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+strong.raster.l3 <- imager:::as.data.frame.cimg(strong.b1.l3)
+
+# Land 4
+dx <- imgradient(strong.b1.l4, "x")
+dy <- imgradient(strong.b1.l4, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+strong.b1.l4 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+strong.raster.l4 <- imager:::as.data.frame.cimg(strong.b1.l4)
+
+# Land 5
+dx <- imgradient(strong.b1.l5, "x")
+dy <- imgradient(strong.b1.l5, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+strong.b1.l5 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+strong.raster.l5 <- imager:::as.data.frame.cimg(strong.b1.l5)
+
+# Land 6
+dx <- imgradient(strong.b1.l6, "x")
+dy <- imgradient(strong.b1.l6, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+strong.b1.l6 <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+strong.raster.l6 <- imager:::as.data.frame.cimg(strong.b1.l6)
+
+```
+
+```{r}
+# Run Hough Transforms
+
+# Land 1
+df.strong.b1.l1 <- hough_line(strong.b1.l1, data.frame = TRUE, shift = FALSE)
+df.strong.b1.l1 <- df.strong.b1.l1 %>%
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .99),
+         theta < (pi/16),
+         theta > (-pi/16))
+
+# Land 2
+df.strong.b1.l2 <- hough_line(strong.b1.l2, data.frame = TRUE, shift = FALSE)
+df.strong.b1.l2 <- df.strong.b1.l2 %>%
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .99),
+         theta < (pi/16),
+         theta > (-pi/16))
+
+# Land 3
+df.strong.b1.l3 <- hough_line(strong.b1.l3, data.frame = TRUE, shift = FALSE)
+df.strong.b1.l3 <- df.strong.b1.l3 %>%
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .99),
+         theta < (pi/16),
+         theta > (-pi/16))
+
+# Land 4
+df.strong.b1.l4 <- hough_line(strong.b1.l4, data.frame = TRUE, shift = FALSE)
+df.strong.b1.l4 <- df.strong.b1.l4 %>%
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .99),
+         theta < (pi/16),
+         theta > (-pi/16))
+
+# Land 5
+df.strong.b1.l5 <- hough_line(strong.b1.l5, data.frame = TRUE, shift = FALSE)
+df.strong.b1.l5 <- df.strong.b1.l5 %>%
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .99),
+         theta < (pi/16),
+         theta > (-pi/16))
+
+# Land 6
+df.strong.b1.l6 <- hough_line(strong.b1.l6, data.frame = TRUE, shift = FALSE)
+df.strong.b1.l6 <- df.strong.b1.l6 %>%
+  mutate(theta = ifelse(theta <= pi, theta, theta - 2*pi)) %>%
+  filter(score > quantile(score, .99),
+         theta < (pi/16),
+         theta > (-pi/16))
+```
+
+```{r}
+# Create good vertical segments
+
+# Land 1
+
+segments.l1 <- rho_to_ab(df = df.strong.b1.l1)
+segments.l1 <- segments.l1 %>%
+  mutate(
+         xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.b1.l1) - yintercept)/slope)/2),
+         pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.b1.l1) - yintercept)/slope))
+
+good_vertical_segs.l1<- segments.l1$xaverage
+
+lthird.l1 <- width(strong.b1.l1)/6
+uthird.l1 <- 5*width(strong.b1.l1)/6
+
+closelthird <- good_vertical_segs.l1[which.min(abs(good_vertical_segs.l1 - lthird.l1))]
+closeuthird <- good_vertical_segs.l1[which.min(abs(good_vertical_segs.l1 - uthird.l1))]
+
+
+bestfit.l1 <- segments.l1 %>%
+  filter(xaverage %in% c(closelthird, closeuthird))
+
+
+
+
+# Land 2
+
+segments.l2 <- rho_to_ab(df = df.strong.b1.l2)
+segments.l2 <- segments.l2 %>%
+  mutate(
+         xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.b1.l2) - yintercept)/slope)/2),
+         pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.b1.l2) - yintercept)/slope))
+
+good_vertical_segs.l2 <- segments.l2$xaverage
+
+lthird.l2 <- width(strong.b1.l2)/6
+uthird.l2 <- 5*width(strong.b1.l2)/6
+
+closelthird <- good_vertical_segs.l2[which.min(abs(good_vertical_segs.l2 - lthird.l2))]
+closeuthird <- good_vertical_segs.l2[which.min(abs(good_vertical_segs.l2 - uthird.l2))]
+
+
+bestfit.l2 <- segments.l2 %>%
+  filter(xaverage %in% c(closelthird, closeuthird))
+
+# Land 3
+
+segments.l3 <- rho_to_ab(df = df.strong.b1.l3)
+segments.l3 <- segments.l3 %>%
+  mutate(
+         xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.b1.l3) - yintercept)/slope)/2),
+         pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.b1.l3) - yintercept)/slope))
+
+good_vertical_segs.l3 <- segments.l3$xaverage
+
+lthird.l3 <- width(strong.b1.l3)/6
+uthird.l3 <- 5*width(strong.b1.l3)/6
+
+closelthird <- good_vertical_segs.l3[which.min(abs(good_vertical_segs.l3 - lthird.l3))]
+closeuthird <- good_vertical_segs.l3[which.min(abs(good_vertical_segs.l3 - uthird.l3))]
+
+bestfit.l3 <- segments.l3 %>%
+  filter(xaverage %in% c(closelthird, closeuthird))
+
+# Land 4
+
+segments.l4 <- rho_to_ab(df = df.strong.b1.l4)
+segments.l4 <- segments.l4 %>%
+  mutate(
+         xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.b1.l4) - yintercept)/slope)/2),
+         pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.b1.l4) - yintercept)/slope))
+
+good_vertical_segs.l4 <- segments.l4$xaverage
+
+lthird.l4 <- width(strong.b1.l4)/6
+uthird.l4 <- 5*width(strong.b1.l4)/6
+
+closelthird <- good_vertical_segs.l4[which.min(abs(good_vertical_segs.l4 - lthird.l4))]
+closeuthird <- good_vertical_segs.l4[which.min(abs(good_vertical_segs.l4 - uthird.l4))]
+
+
+bestfit.l4 <- segments.l4 %>%
+  filter(xaverage %in% c(closelthird, closeuthird))
+
+# Land 5
+
+segments.l5 <- rho_to_ab(df = df.strong.b1.l5)
+segments.l5 <- segments.l5 %>%
+  mutate(
+         xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.b1.l5) - yintercept)/slope)/2),
+         pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.b1.l5) - yintercept)/slope))
+
+good_vertical_segs.l5 <- segments.l5$xaverage
+
+lthird.l5 <- width(strong.b1.l5)/6
+uthird.l5 <- 5*width(strong.b1.l5)/6
+
+closelthird <- good_vertical_segs.l5[which.min(abs(good_vertical_segs.l5 - lthird.l5))]
+closeuthird <- good_vertical_segs.l5[which.min(abs(good_vertical_segs.l5 - uthird.l5))]
+
+bestfit.l5 <- segments.l5 %>%
+  filter(xaverage %in% c(closelthird, closeuthird))
+
+# Land 6
+
+segments.l6 <- rho_to_ab(df = df.strong.b1.l6)
+segments.l6 <- segments.l6 %>%
+  mutate(
+         xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.b1.l6) - yintercept)/slope)/2),
+         pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.b1.l6) - yintercept)/slope))
+
+good_vertical_segs.l6 <- segments.l6$xaverage
+
+lthird.l6 <- width(strong.b1.l6)/6
+uthird.l6 <- 5*width(strong.b1.l6)/6
+
+closelthird <- good_vertical_segs.l6[which.min(abs(good_vertical_segs.l6 - lthird.l6))]
+closeuthird <- good_vertical_segs.l6[which.min(abs(good_vertical_segs.l6 - uthird.l6))]
+
+bestfit.l6 <- segments.l6 %>%
+  filter(xaverage %in% c(closelthird, closeuthird))
+
+```
+
+
+```{r}
+# Plot all 6 together
+png("images/Houston_BarrelF_Bullet1_BestFit_All_Lands.png", width = 2400, height = 1100)
+par(mfrow=c(2,3))
+plot(strong.b1.l1)
+with(bestfit.l1, nfline(theta, rho, col = "red", lwd = 3))
+plot(strong.b1.l2)
+with(bestfit.l2, nfline(theta, rho, col = "red", lwd = 3))
+plot(strong.b1.l3)
+with(bestfit.l3, nfline(theta, rho, col = "red", lwd = 3))
+plot(strong.b1.l4)
+with(bestfit.l4, nfline(theta, rho, col = "red", lwd = 3))
+plot(strong.b1.l5)
+with(bestfit.l5, nfline(theta, rho, col = "red", lwd = 3))
+plot(strong.b1.l6)
+with(bestfit.l6, nfline(theta, rho, col = "red", lwd = 3))
+dev.off()
+
+```
+

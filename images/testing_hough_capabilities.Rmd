@@ -1,0 +1,157 @@
+---
+title: "Testing Hough Capabilities"
+author: "Charlotte Roiger"
+date: "6/11/2019"
+output: html_document
+---
+```{r}
+# Load library
+library(tidyverse)
+library(imager)
+library(x3ptools)
+library(bulletxtrctr)
+library(grooveFinder)
+```
+
+```{r}
+# Load in rdata
+phnx.g1.a9 <- readRDS("/Users/charlotteroiger/Documents/CSAFE_bullet_quality/data/phoenix_data/Phoenix_Set_Gun1-A9.rda")
+
+```
+
+
+```{r}
+# Get grooves
+
+phnx.g1.a9 <- phnx.g1.a9 %>% mutate(
+  grooves_middle = ccdata %>% 
+    purrr::map(.f = cc_locate_grooves, method = "middle", 
+               adjust = 30, return_plot = FALSE),
+  grooves_rollapply = ccdata %>% 
+    purrr::map(.f = cc_locate_grooves, method = "rollapply", 
+               adjust = 30, return_plot = FALSE)
+)
+
+phnx.g1.a9 <- phnx.g1.a9 %>% mutate(
+  grooves_hough = x3p %>% purrr::map(.f = x3p_to_df) %>%
+    purrr::map(.f = cc_locate_grooves, method = "hough", 
+               adjust = 30, qu = 0.9, return_plot = FALSE)
+)
+
+
+phnx.g1.a9.land1 <- phnx.g1.a9[1,] %>%
+  mutate(
+    hough_left = grooves_hough[[1]]$groove[1],
+    middle_left = grooves_middle[[1]]$groove[1],
+    rollapply_left = grooves_rollapply[[1]]$groove[1],
+    hough_right = grooves_hough[[1]]$groove[2],
+    middle_right = grooves_middle[[1]]$groove[2],
+    rollapply_right = grooves_rollapply[[1]]$groove[2]
+  )
+
+
+profilesplus <- phnx.g1.a9.land1 %>% tidyr::gather(type_side, location, hough_left:rollapply_right) %>%
+  tidyr::separate(type_side, into=c("type", "side")) %>%
+  tidyr::unnest(ccdata)  # gets rid of all the other list variables 
+
+profilesplus %>% 
+  ggplot(aes(x = x/1000, y = value)) +
+  facet_grid(bullet~land) +
+  geom_line() +
+  geom_vline(aes(xintercept=location/1000, colour=type), size=0.75) +
+  theme_bw() +
+  scale_colour_brewer(palette="Dark2") +
+  theme(legend.position = "bottom") +
+  xlab("Relative location (in millimeters)") +
+  ylab("Relative height (in microns)")
+```
+
+```{r}
+phoenix.b1.l1 <- as.cimg(phnx.g1.a9$x3p[[1]]$surface.matrix)
+
+dx <- imgradient(phoenix.b1.l1, "x")
+dy <- imgradient(phoenix.b1.l1, "y")
+
+grad.mag <- sqrt(dx^2 + dy^2)
+
+strong.phnx.b1.l1 <- grad.mag > quantile(grad.mag, .99, na.rm = T)
+
+df.strong.phnx.b1.l1 <- hough_line(strong.phnx.b1.l1, data.frame = TRUE, shift = FALSE)
+
+segments <- rho_to_ab(df = df.strong.phnx.b1.l1)
+segments <- segments %>%
+  mutate(
+         xaverage = ifelse(theta == 0, xintercept, ((0-yintercept)/slope + (height(strong.phnx.b1.l1) - yintercept)/slope)/2),
+         pixset.intercept = ifelse(theta == 0, xintercept, (height(strong.phnx.b1.l1) - yintercept)/slope))
+
+good_vertical_segs <- segments %>%
+  filter(score > quantile(score, 0.9975) & theta < pi/4) %>%
+  extract2("xaverage")
+
+lthird <- width(strong.phnx.b1.l1)/6
+uthird <- 5*width(strong.phnx.b1.l1)/6
+
+closelthird <- good_vertical_segs[which.min(abs(good_vertical_segs - lthird))]
+closeuthird <- good_vertical_segs[which.min(abs(good_vertical_segs - uthird))]
+
+bestfit <- segments %>%
+  filter(xaverage %in% c(closelthird, closeuthird))
+
+
+plot(strong.phnx.b1.l1)
+with(bestfit, nfline(theta, rho, col = "red", lwd = 3))
+abline(v = lthird, col = "green", lwd = 3)
+abline(v = uthird, col = "green", lwd = 3)
+```
+
+Why is it that the cross cut groove identification is so off compared to the hough transform estimates?
+
+# Try with Hamby 44
+
+```{r}
+# Load in rdata
+hamby44.bar1 <- readRDS("/Users/charlotteroiger/Documents/CSAFE_bullet_quality/data/hamby44/Hamby44_Set_Barrel1.rda")
+
+hamby44.bar1 <- hamby44.bar1 %>% mutate(
+  grooves_middle = ccdata %>% 
+    purrr::map(.f = cc_locate_grooves, method = "middle", 
+               adjust = 30, return_plot = FALSE),
+  grooves_rollapply = ccdata %>% 
+    purrr::map(.f = cc_locate_grooves, method = "rollapply", 
+               adjust = 30, return_plot = FALSE)
+)
+
+hamby44.bar1 <- hamby44.bar1 %>% mutate(
+  grooves_hough = x3p %>% purrr::map(.f = x3p_to_df) %>%
+    purrr::map(.f = cc_locate_grooves, method = "hough", 
+               adjust = 30, qu = 0.9, return_plot = FALSE)
+)
+
+hamby44.bar1 <- hamby44.bar1 %>% mutate(
+  hough_left = grooves_hough %>% purrr::map_dbl(.f = function(x) x$groove[1]),
+  middle_left = grooves_middle %>% purrr::map_dbl(.f = function(x) x$groove[1]),
+  rollapply_left = grooves_rollapply %>% purrr::map_dbl(.f = function(x) x$groove[1]),
+  hough_right = grooves_hough %>% purrr::map_dbl(.f = function(x) x$groove[2]),
+  middle_right = grooves_middle %>% purrr::map_dbl(.f = function(x) x$groove[2]),
+  rollapply_right = grooves_rollapply %>% purrr::map_dbl(.f = function(x) x$groove[2])
+)
+
+```
+
+```{r}
+profilesplus <- hamby44.bar1 %>% tidyr::gather(type_side, location, hough_left:rollapply_right) %>%
+  tidyr::separate(type_side, into=c("type", "side")) %>%
+  tidyr::unnest(ccdata)  # gets rid of all the other list variables 
+
+profilesplus %>% 
+  ggplot(aes(x = x/1000, y = value)) +
+  facet_grid(bullet~land) +
+  geom_line() +
+  geom_vline(aes(xintercept=location/1000, colour=type), size=0.75) +
+  theme_bw() +
+  scale_colour_brewer(palette="Dark2") +
+  theme(legend.position = "bottom") +
+  xlab("Relative location (in millimeters)") +
+  ylab("Relative height (in microns)")
+```
+
