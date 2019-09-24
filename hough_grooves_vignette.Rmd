@@ -1,0 +1,71 @@
+---
+title: "Hough Grooves Vignette"
+author: "Charlotte Roiger"
+date: "9/22/2019"
+output: html_document
+---
+# Finding Groove Locations using Bullet Images
+
+Before this tutorial begins in earnest a discussion of the parametrization and theoretical machinery behind Hough transforms is necessary to facilitate understanding. Before groove estimates are created, the image is pre-processed by `get_grooves_hough` so that it becomes a two-dimensional gradient image to best highlight strong features. The Hough transform then loops through every pixel in the image and determines whether or not there is evidence of a line detected by comparing pixel gradients in some neighborhood. It then estimates the length and the equation of the line detected and parameterizes it using the Hesse normal form:
+$$\rho = x\cos(\theta) + y \sin(\theta)$$
+
+where $\theta$ represents the angle of the line from the positive x-axis and the $\rho$ parameter represents the length of an orthogonal vector from the origin to the line along angle the $\theta$. 
+
+```{r, echo=FALSE}
+knitr::include_graphics("images/hough_parametrization.png")
+```
+
+As such, the Hough transformation deals with the index of the pixels from the surface matrix of each x3p scan. So a conversion between pixels to microns is taken care of within the `get_grooves_hough` function. Once Hough grooves are estimated, we utilize the heuristic that grooves will often be located to the left of the lower $\frac{1}{6}^{th}$ or above the upper $\frac{5}{6}^{ths}$ of the bullet land to separate the estimated Hough lines into designated left-hand and right-hand groove estimates. We then normalize the estimated Hough transform score over the maximum possible distance for the line detected so long as the line intersects with the bottom of the bullet land. The line with the highest normalized Hough score is then selected as a viable groove estimate as shown in the following tutorial. 
+
+
+1. Load in Libraries
+
+```{r}
+library(grooveFinder)
+library(bulletxtrctr)
+library(x3ptools)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(nbtrd) # devtools::install_github("csafe-isu/nbtrd")
+```
+
+2. `grooveFinder` only works on x3p files. See package x3ptools at https://heike.github.io/x3ptools/ for ways to convert different file formats into x3p standard files. The NIST Research Ballistics Toolmarks data base (NRBTD)[https://tsapps.nist.gov/NRBTD/Studies/Search] provides access to scans of bullets and cartridge cases from various case studies.
+
+
+For this tutorial we will work with 12 bullet land scans from the Hamby 252 demo set from NRBTD repository. 
+
+```{r}
+b1 <- read_bullet(urllist = hamby44demo$bullet1)
+b2 <- read_bullet(urllist = hamby44demo$bullet2)
+```
+
+Combine bullet lands into a single dataframe.
+
+```{r}
+b1$bullet <- 1
+b2$bullet <- 2
+b1$land <- 1:6
+b2$land <- 1:6
+bullets <- rbind(b1, b2)
+```
+
+Convert the image units from meters to microns and rotate the scans 90 degrees so that the image is oriented properly with the heal of the bullet land at the bottom of the image.
+
+```{r}
+bullets <- bullets %>% mutate(
+  x3p = x3p %>% purrr::map(.f = x3p_m_to_mum)
+)
+
+# turn the scans such that (0,0) is at the bottom left
+bullets <- bullets %>% mutate(
+  x3p = x3p %>% purrr::map(.f = function(x) x %>% 
+                             y_flip_x3p())
+) 
+```
+
+
+
+3. Get the ideal crosscut
+
+For this method, we utilize the entire image of the bullet land. However we can get a better comparison between the Hough method and other methods available in `grooveFinder` by visualizing our identified method on a single crosscut. 
