@@ -25,14 +25,13 @@
 
 \begin{document}
 \SweaveOpts{concordance=TRUE}
-\lhead{05-30-2019}
+\lhead{\today}
 \chead{CSAFE - Hough Grooves Document Process}
 \rhead{Page \thepage\ of \pageref{LastPage}}
 
 \section{Introduction}
-
+I do not know how to start introductions!!!!!! 
 \section{Methods}
-
 
 In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unforunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be "strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the Canny Edge algorithm increases processing time by about 35 seconds per image and actually highlights more striae and breakoff. 
 
@@ -70,44 +69,40 @@ As shown in Figure \ref{fig: canny} the striae in the LEA are much more pronunce
       \caption{Hough Transform with 900 bins}
       \label{fig: hough2}
       \end{subfigure}
-      \caption{Side-by-side comparison of Houston Barrel F Land 1 Hough Transformation. Hough lines are filtered by having scores in the 99.9th percentile, and having central angles less than $\frac{\pi}{4}$.}
+      \caption{Side-by-side comparison of Houston Barrel F Land 1 Hough Transformation. Hough lines are filtered by having scores in the 99.9th percentile, and having central angles less than $\frac{\pi}{16}$.}
       \label{fig: hough-compare}
 \end{figure}
 
-Once Hough lines are calculated we select only the lines that have scores greater than the $99.9^{th}$ percentile to try and ensure that we are dealing with only the strongest edges and do not accidentally pick up on any particularly strong striae on the LEAs. We also make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. Therefore we select only the Hough lines that have angles from the positive x-axis less than $\frac{\pi}{4}$ and greater than $\frac{-\pi}{4}$. The parametrization outputted by `` \texttt{hough\char`_lines}" is of the form:
+We make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. It is worth noting that the original output of the `` \texttt{hough\char`_lines}" functions have angles ranging from 0 to $2\pi$. So to make selecting lines from our desired range, easier we chose to transform any angle greater than $\pi$, to instead be from 0 to $-\pi$ by subtracting $2\pi$ from the original theta angle. Therefore we select only the Hough lines that have theta angles from the positive x-axis less than $\frac{\pi}{16}$ and greater than $\frac{-\pi}{16}$. The parametrization produced by `` \texttt{hough\char`_lines}" is of the form:
 
 \begin{center}
 $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 \end{center}
 
-Where $\rho$ represents the length of the normalized vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. In Figure \ref{fig: parametrization} we see an example of how Hough transforms parametrize a line.
+Where $\rho$ represents the length of the normalized orthogonal vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. We note that the format of bullet images is slightly different from standard x-y-plots. In two-dimensional representations of bullet images, the y-axis is inverted from what we would expect. A reason for this is that the images are processed in \textbf{C++} which stores images, known as ``CImgs'' in a vector format where the first pixel in the vector corresponds to the upper lefthand pixel of the image located at (0,0). Pixels are then ordered from left to right, extending from the origin to the positive x-direction and from top to bottom, from the x-axis towards the negative y-direction. In Figure \ref{fig: parametrization} we see an example of how Hough transforms parametrize a line. In this figure, the orange line represents an example of a detected Hough line. The teal line connecting the origin to the orthogonal bisector of our detected Hough line represents the vector denoted $\rho$ in our above equation. Similarly the teal arc below represents the angle, $\theta$, which is the difference between the top of the image and the orthogonal bisector. 
 
-\begin{figure}[!ht]
-  \begin{subfigure}{.5\textwidth}
-    \centering
-    \begin{tikzpicture}
-      \draw [<->] (0,-6) -- (0,0) -- (6,0);
-      \draw [ultra thick] (0,-5) -- (5,0);
-      \draw [orange, thick] (0,0) -- (2.5, -2.5);
-      \draw [green, thick] (1,0) arc [radius = 1, start angle = 0, end angle = -45];
-      \draw [black] (2.5, -2.5) rectangle (3.5,-1.5);
-    \end{tikzpicture}
-  \label{fig: tikz1}
-  \end{subfigure}
-  \begin{subfigure}{.5\textwidth}
-    \centering
-    \begin{tikzpicture}
-      \draw [<->] (0,-6) -- (0,0) -- (6,0);
-      \draw [ultra thick] (3,-6) -- (3,0);
-      \draw [orange, thick] (0,0) -- (3,0);
-    \end{tikzpicture}
-    \label{fig: tikz2}
-  \end{subfigure}
-  \caption{Diagram of Hough transform parametrization oriented for image origin.}
+\begin{figure}[ht!]
+  \centering
+  \includegraphics{../images/hessian-example.png}
+  \caption{Example of Hessian Normal Form parametrization overlaid a bullet scan}
   \label{fig: parametrization}
 \end{figure}
 
-We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$. We then calculate the slope and the y-intercept in a similar fashion. To determine which Hough line is the boundary of each GEA we rely on the assumption that the middle two thirds of each bullet scan is often part of the LEA. Therefore, we find the x-intercept of the lower and upper one sixth of our bullet scan then compare these boundaries to each Hough Line. We then define the average x-value of each line to be the average x-intercept of the Hough line at an x-value of 0 and at an x-value equivalent to the number of pixels in the width of the bullet scan. The Hough lines whose average x values are the smallest distance from the x-intercept of the lower and upper one sixth of our bullet scan are defined to be the start of our groove locations. 
+We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$.  We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The top is the x-intercept calculated previously, however to calculate the bottom intersection of the bullet land we utilize some geometric properties. We can draw a perpendicular line from the x-intercept at the top of the land to the bottom of the land creating a right triangle as shown below in \ref{fig: calcxbottom}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the xintercept to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the x-intercept is known, we can use an elementary geometry technique to calculate the distance labelled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{height}$. So the index of the bottom intersection of the bullet land is equivalent to top-intersection - $\delta$. 
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics{../images/calc-xbottom.png}
+  \caption{Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA}
+  \label{fig: calcxbottom}
+\end{figure}
+
+The utility for calculating the top and bottom intercept of our bullet land is that it allows us to calculate the slope of each Hough line with respect to the y-direction. 
+\begin{center}
+\text{Slope \ with \ respect \ to \ y} = $\frac{(\text{x-intercept of the top} - \text{x-intercept of the bottom})}{\text{height of the bullet land}}$
+\end{center}
+
+Traditionally slope with respect to the x-direction is chosen for describing the equation of a line, however, because we are primarily interested in vertical lines the slope with respect to the x-direction tends to infinity. This is undesireable for a number of reasons, and so we have decided to use the slope with respect to y because it is more robust for describing Hough lines. 
 
 \section{Results?}
 

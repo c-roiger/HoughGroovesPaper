@@ -297,3 +297,29 @@ with(subset(segments, xaverage %in% c(closelthird, closeuthird)), nfline(theta, 
 abline(v = lthird, col = "green", lwd = 3)
 abline(v = uthird, col = "green", lwd = 3)
 dev.off()
+
+
+# \begin{figure}[!ht]
+# \begin{subfigure}{.5\textwidth}
+# \centering
+# \begin{tikzpicture}
+# \draw [<->] (0,-6) -- (0,0) -- (6,0);
+# \draw [ultra thick] (0,-5) -- (5,0);
+# \draw [orange, thick] (0,0) -- (2.5, -2.5);
+# \draw [green, thick] (1,0) arc [radius = 1, start angle = 0, end angle = -45];
+# \draw [black] (2.5, -2.5) rectangle (3.5,-1.5);
+# \end{tikzpicture}
+# \label{fig: tikz1}
+# \end{subfigure}
+# \begin{subfigure}{.5\textwidth}
+# \centering
+# \begin{tikzpicture}
+# \draw [<->] (0,-6) -- (0,0) -- (6,0);
+# \draw [ultra thick] (3,-6) -- (3,0);
+# \draw [orange, thick] (0,0) -- (3,0);
+# \end{tikzpicture}
+# \label{fig: tikz2}
+# \end{subfigure}
+# \caption{Diagram of Hough transform parametrization oriented for image origin.}
+# \label{fig: parametrization}
+# \end{figure}
