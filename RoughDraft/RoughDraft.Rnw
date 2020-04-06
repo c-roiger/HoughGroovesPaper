@@ -70,7 +70,7 @@ In broad terms, the Hough Transform is a feature extraction technique for detect
 \end{figure}
 
 
-The point of intersection in the feature space, then corresponds to the parameters used to describe the edge in the (x,y)-plane that the two detected points lie upon. A two dimensional array called the "accumulator array" is used to keep track of features detected.  The accumulator array covers the entirety of the feature space separated into a user-specified number of bins. For each set of features detected the bin in the accumulator array associated with that set of features is incremented. So in theory, strong features should have higher values in their associated bin because 
+The point of intersection in the feature space, then corresponds to the parameters used to describe the edge in the (x,y)-plane that the two detected points lie upon. A two dimensional array called the "accumulator array" is used to keep track of features detected.  The accumulator array covers the entirety of the feature space separated into a user-specified number of bins. For each set of features detected the bin in the accumulator array associated with that set of features is incremented. So in theory, strong features should have higher values in their associated bin because there is a larger number of pixels detected that all have the same set of features in the feature space. 
 
 
 In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unforunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be "strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the Canny Edge algorithm increases processing time by about 35 seconds per image and actually highlights more striae and breakoff. 
@@ -154,36 +154,19 @@ As discussed before, the Hough transform outputs a sort of score that correpsond
 \end{figure}
 
 
-We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure \ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in figure \ref{fig:middlefifty} where the middle fifty percent of the bullet land is bordered by cyan coloured vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. 
+We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure \ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. 
 \begin{figure}[ht!]
   \centering
   \includegraphics{../images/phnx-1-m2-b1-l1-middle-fifty-demo.png}
   \caption{Middle fifty percent of the bullet land marked by two cyan coloured vertical lines imposed over the Phoenix set Gun 1-M2 Bullet 1 Land 1 scan}
   \label{fig:middlefifty}
 \end{figure}
-<<r, eval=FALSE, echo=FALSE>>=
-x3p <- read_x3p("../../../../../Volumes/Samsung_T3/Phoenix/Gun 1-M2/B1/L1.x3p")
-pix_to_micron <- function(x, land) {
-  assert_that(is.numeric(x))
-  (x - 1) * x3p_get_scale(land)
-}
 
-lfourth <- width(x3p$surface.matrix)/4
-ufourth <- 3*width(x3p$surface.matrix)/4
-mask <- matrix(
-    data = FALSE,
-    nrow = ncol(x3p$surface.matrix),
-    ncol = nrow(x3p$surface.matrix)
-  )
+To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in figure \ref{fig:middlefifty} where the middle fifty percent of the bullet land is bordered by cyan coloured vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
 
-a <- x3p %>% x3p_add_mask_layer(mask = mask)
-a <- a %>% x3p_add_vline(xintercept = pix_to_micron(lfourth, a), color = "cyan", size = 10)
-a <- a %>% x3p_add_vline(xintercept = pix_to_micron(ufourth, a), color = "cyan", size = 10)
-x3ptools::image_x3p(a)
-@
+Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the scale of the x3p-scan. Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows:
 
-
-
-
-
+\begin{center}
+  $\text{Groove Estimate} = \text{Bottom x-intercept in microns} + \text{slope}*y_{i} - \text{adjust}$
+\end{center}
 \end{document}
