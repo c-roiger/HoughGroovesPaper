@@ -31,8 +31,24 @@
 
 \section{Introduction}
 I do not know how to start introductions!!!!!! 
-\section{Methods}
 
+XXX HH: introductions are usually written last - until then just collect all of the talking points that you need to introduce XXX
+
+Talking points:
+
+in no particular order
+
+\begin{itemize}
+\item data comes in form of scans, scans are a result of high-resolution 3d microscopy; each scan consists of height measurements collected over a regular x-y grid. This makes the data somewhat similar to a (grey-scale) image. XXX show scan and explain different parts
+\item part of the work a firearms and toolmark examiner has to do is to assess evidence for its source. Generally, a pair of cartridge cases or bullets (from the crime scene or retrieved in the lab from a suspect's firearm) is being checked whether or not the patterns on the items are similar enough to be coming from the same source. FTEs are testifying in court according to the AFTE rules of identification (include citation) XXX show bullet and explain different parts
+\item PCAST report and NRC have critized a lot of forensic for its lack of scientific validity - FTE examinations are subjective and do not have established error rates. XXX cite reports
+\item Paper by Hare et al introduces an algorithm for an automatic matching method of bullets based on 3d scans of land engraved areas (LEAs): objective and allows establishing error rates for different situations based on studies (firearm/ammunition combination) XXX overview picture?
+\item Part of the matching process in the Hare et al paper is to locate the location of the groove engraved areas and separate from the leand engraved areas. The rollapply method suggested in the paper is not working 100\% and leads to erroneous conclusions down stream in the analysis. 
+\end{itemize}
+
+\section{Background}
+
+XXX chop into smaller sections - only a part of your current writeup is an overview of hough transforms. Afterwards you go into an application of hough transforms on scans - that's where the methods section starts XXX
 
 \subsection{Brief Overview of Hough Transforms}
 
