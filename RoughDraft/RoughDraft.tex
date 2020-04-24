@@ -32,7 +32,62 @@
 
 \section{Introduction}
 I do not know how to start introductions!!!!!! 
-\section{Methods}
+
+XXX HH: introductions are usually written last - until then just collect all of the talking points that you need to introduce XXX
+
+Talking points:
+
+in no particular order
+
+\begin{itemize}
+\item data comes in form of scans, scans are a result of high-resolution 3d microscopy; each scan consists of height measurements collected over a regular x-y grid. This makes the data somewhat similar to a (grey-scale) image. XXX show scan and explain different parts
+\item part of the work a firearms and toolmark examiner has to do is to assess evidence for its source. Generally, a pair of cartridge cases or bullets (from the crime scene or retrieved in the lab from a suspect's firearm) is being checked whether or not the patterns on the items are similar enough to be coming from the same source. FTEs are testifying in court according to the AFTE rules of identification (include citation) XXX show bullet and explain different parts
+\item PCAST report and NRC have critized a lot of forensic for its lack of scientific validity - FTE examinations are subjective and do not have established error rates. XXX cite reports
+\item Paper by Hare et al introduces an algorithm for an automatic matching method of bullets based on 3d scans of land engraved areas (LEAs): objective and allows establishing error rates for different situations based on studies (firearm/ammunition combination) XXX overview picture?
+\item Part of the matching process in the Hare et al paper is to locate the location of the groove engraved areas and separate from the leand engraved areas. The rollapply method suggested in the paper is not working 100\% and leads to erroneous conclusions down stream in the analysis. 
+\end{itemize}
+
+\section{Background}
+
+XXX chop into smaller sections - only a part of your current writeup is an overview of hough transforms. Afterwards you go into an application of hough transforms on scans - that's where the methods section starts XXX
+
+\subsection{Brief Overview of Hough Transforms}
+
+
+In broad terms, the Hough Transform is a feature extraction technique for detecting shapes in an image. For any given point in the (x,y)-plane of our image we can calculate a corresponding line in the feature space. Points that lie on the same line will have lines that intersect in the feature space. 
+\begin{figure}[!ht]
+\begin{subfigure}{.5\textwidth}
+\centering
+\begin{tikzpicture}
+\draw [<->] (0,-6) node (yaxis) [below] {$y$} -- (0,0) -- (6,0) node (xaxis) [right] {$x$};
+\draw [ultra thick] (0.5,-0.5) -- (5.5, -5.5);
+\draw [fill = cyan] (1.5,-1.5) circle [radius=0.2];
+\node [] at (2.5, -1.5) {($x_{i}, y_{i}$)};
+\draw [fill = orange] (3.5,-3.5) circle [radius=0.2];
+\node [] at (4.5, -3.5) {($x_{j}, y_{j}$)};
+\node [] at (6,-6) {$y = ax + b$};
+\end{tikzpicture}
+\label{fig: tikz1}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+\centering
+\begin{tikzpicture}
+\draw [<->] (0,-6) node (yaxis) [below] {$b$} -- (0,0) -- (6,0) node (xaxis) [right] {$a$};
+\draw[cyan, ultra thick] (0.5, -1) -- (6,-3);
+\node [] at (2, -5.5) {$b=x_{j}a + y_{j}$};
+\node [] at (2.5, -1) {$b=-x_{i}a + y_{i}$};
+\draw[orange, ultra thick] (0.5, -5) -- (6,-0.5);
+\draw [fill] (3.89,-2.23) circle [radius=0.2];
+\node [] at (3.89, -3) {($a, b$)};
+\end{tikzpicture}
+\label{fig: tikz2}
+\end{subfigure}
+\caption{Diagram of feature space linea transformation oriented for image origin.}
+\label{fig: parametrization}
+\end{figure}
+
+
+The point of intersection in the feature space, then corresponds to the parameters used to describe the edge in the (x,y)-plane that the two detected points lie upon. A two dimensional array called the "accumulator array" is used to keep track of features detected.  The accumulator array covers the entirety of the feature space separated into a user-specified number of bins. For each set of features detected the bin in the accumulator array associated with that set of features is incremented. So in theory, strong features should have higher values in their associated bin because there is a larger number of pixels detected that all have the same set of features in the feature space. 
 
 
 In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unforunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be "strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the Canny Edge algorithm increases processing time by about 35 seconds per image and actually highlights more striae and breakoff. 
@@ -104,18 +159,31 @@ The utility for calculating the top and bottom intercept of our bullet land is t
 \text{Slope \ with \ respect \ to \ y} = $\frac{(\text{x-intercept of the top} - \text{x-intercept of the bottom})}{\text{height of the bullet land}}$
 \end{center}
 
-Traditionally slope in with respect to the x-direction is chosen for describing the equation of a line, however, because we are primarily interested in vertical lines the slope with respect to the x-direction tends to infinity. This is undesireable for a number of reasons, and so we have decided to  
+Traditionally slope with respect to the x-direction is chosen for describing the equation of a line, however, because we are primarily interested in vertical lines the slope with respect to the x-direction tends to infinity. This is undesireable for a number of reasons, and so we have decided to use the slope with respect to y because it is more robust for describing Hough lines. 
 
-\section{Results?}
+As discussed before, the Hough transform outputs a sort of score that correpsonds to the number of pixels detected on a line that can give us an indication of the strength of the feature detected. Theoretically, we would expect the strongest lines in our image to be the grooves on either side of the bullet land. So the problem arises of how best to select strong edges. Rather than simply filter scores on some arbitrary threshold, we normalize the Hough scores by the largest possible score that could be achieved for each set of features detected. The reason for this is that longer lines will have a larger Hough score, simply by virtue of having a larger number of possible detectable pixels.  
 
-In Figure \ref{fig: bestfit1} we show both the middle two thirds of the bullet land and the estimated best fit for the grooves based on our Hough transform. 
-
-\begin{figure}[!ht]
+\begin{figure}[ht!]
   \centering
-  \includegraphics[width = .9\textwidth]{../images/Hamby_252_Bullet1_Land3_BestFit}
-  \caption{Houstong Barrel F Bullet 1 middle two-thirds of the bullet land shown in green. Estimated Start of GEA shown in red}
-  \label{fig: bestfit1}
+  \includegraphics{../images/calc-theoretical-max.png}
+  \caption{Demonstration of calculation of theoretical maximum Hough score using SOH-CAH-TOA}
+  \label{fig:calcmaxscore}
 \end{figure}
- 
 
+
+We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure \ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. 
+\begin{figure}[ht!]
+  \centering
+  \includegraphics{../images/phnx-1-m2-b1-l1-middle-fifty-demo.png}
+  \caption{Middle fifty percent of the bullet land marked by two cyan coloured vertical lines imposed over the Phoenix set Gun 1-M2 Bullet 1 Land 1 scan}
+  \label{fig:middlefifty}
+\end{figure}
+
+To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in figure \ref{fig:middlefifty} where the middle fifty percent of the bullet land is bordered by cyan coloured vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
+
+Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the scale of the x3p-scan. Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows:
+
+\begin{center}
+  $\text{Groove Estimate} = \text{Bottom x-intercept in microns} + \text{slope}*y_{i} - \text{adjust}$
+\end{center}
 \end{document}
