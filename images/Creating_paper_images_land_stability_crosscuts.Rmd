@@ -294,3 +294,86 @@ dev.off()
 
 ```
 
+```{r}
+library(cowplot)
+library(grid)
+library(png)
+p <- ggplot() +
+  geom_segment(aes(x =250, y = 0, xend = 250, yend = 150), lwd= 2, colour = "orange") +
+  geom_segment(aes(x =250, y = 150, xend = 250, yend = 300), lwd= 2, colour = "white") +
+  geom_segment(aes(x =250, y = 0, xend = 450, yend = 150), lwd= 2, colour = "deepskyblue1") +
+  geom_curve(aes(x = 250, y = 40, xend = 290, yend = 35), lwd = 1, colour = "#e6e0ff", curvature = 0.7) + 
+  annotate('text', x = 280, y = 60, 
+        label = "theta",parse = TRUE,size=6, colour = "#e6e0ff") +
+    annotate('text', x = 170, y = 80, 
+        label = "Height", parse = TRUE, size=4, colour = "#e6e0ff") +
+   annotate('text', x = 580, y = 80, 
+        label = "Theoretical Maximum", size=4, colour = "#e6e0ff") +
+  theme_set(theme_cowplot())+
+  scale_y_reverse() +
+  scale_x_continuous(limits = c(0, 1200), position = "top")
+
+
+ggdraw() +
+  draw_image("../../grooveFinder/man/figures/after-before.png", x = 0.05, y = 0, height = 1.25, width = 1) +
+  draw_plot(p)
+
+ggsave("calc-theoretical-max.png")
+
+```
+```{r}
+p <- ggplot() +
+  geom_segment(aes(x =150, y = 150, xend = 500, yend = 0), lwd= 2, colour = "orange") +
+  geom_segment(aes(x =480, y = 170, xend = 480, yend = 300), lwd= 2, colour = "white") +
+  geom_segment(aes(x =0, y = 0, xend = 310, yend = 100), lwd= 2, colour = "deepskyblue1") +
+  geom_curve(aes(x = 100, y = 0, xend = 50, yend = 19), lwd = 1, colour = "deepskyblue1", curvature = -0.7) + 
+  geom_segment(aes(x = 260, y=82, xend = 290, yend = 63), lwd = 2, colour = "deepskyblue1") +
+  geom_segment(aes(x = 335, y = 76, xend = 290, yend = 63), lwd = 2, colour = "deepskyblue1") +
+  annotate('text', x = 150, y = 20, 
+           label = "theta",parse = TRUE,size=6, colour = "#e6e0ff") +
+  annotate('text', x = 150, y = 80, 
+           label = "rho", parse = TRUE, size=6, colour = "#e6e0ff") +
+  theme_set(theme_cowplot()) +
+  scale_y_reverse() +
+  scale_x_continuous(limits = c(0, 1200), position = "top")
+
+
+ggdraw() +
+  draw_image("../../grooveFinder/man/figures/after-before.png", x = 0.05, y = 0, height = 1.25, width = 1) +
+  draw_plot(p)
+
+
+```
+
+```{r}
+x3p <- read_x3p("../../../../../../Volumes/Samsung_T3/Phoenix/Gun 1-U10/B3/L4.x3p")
+grooves <- get_grooves_hough(x3p)
+
+a <- get_mask_hough(x3p, grooves)
+image_x3p(a)
+```
+
+```{r}
+x3p <- read_x3p("../../../../../Volumes/Samsung_T3/Phoenix/Gun 1-M2/B1/L1.x3p")
+pix_to_micron <- function(x, land) {
+  assert_that(is.numeric(x))
+  (x - 1) * x3p_get_scale(land)
+}
+
+lfourth <- width(x3p$surface.matrix)/4
+ufourth <- 3*width(x3p$surface.matrix)/4
+mask <- matrix(
+    data = FALSE,
+    nrow = ncol(x3p$surface.matrix),
+    ncol = nrow(x3p$surface.matrix)
+  )
+
+a <- x3p %>% x3p_add_mask_layer(mask = mask)
+a <- a %>% x3p_add_vline(xintercept = pix_to_micron(lfourth, a), color = "cyan", size = 10)
+a <- a %>% x3p_add_vline(xintercept = pix_to_micron(ufourth, a), color = "cyan", size = 10)
+x3ptools::image_x3p(a)
+
+
+
+```
+

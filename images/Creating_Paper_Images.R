@@ -323,3 +323,92 @@ dev.off()
 # \caption{Diagram of Hough transform parametrization oriented for image origin.}
 # \label{fig: parametrization}
 # \end{figure}
+
+
+library(tidyverse)
+library(cowplot)
+library(grid)
+library(png)
+p <- ggplot() +
+  geom_segment(aes(x =440, y = 0, xend = 60, yend = 300), lwd= 2, colour = "orange") +
+  geom_segment(aes(x =0, y = 0, xend = 310, yend = 100), lwd= 2, colour = "deepskyblue1") +
+  geom_curve(aes(x = 100, y = 0, xend = 50, yend = 19), lwd = 1, colour = "deepskyblue1", curvature = -0.7) + 
+  geom_segment(aes(x = 260, y=82, xend = 290, yend = 63), lwd = 2, colour = "deepskyblue1") +
+  geom_segment(aes(x = 335, y = 76, xend = 290, yend = 63), lwd = 2, colour = "deepskyblue1") +
+  annotate('text', x = 150, y = 20, 
+           label = "theta",parse = TRUE,size=6, colour = "#e6e0ff") +
+  annotate('text', x = 150, y = 80, 
+           label = "rho", parse = TRUE, size=6, colour = "#e6e0ff") +
+  theme_set(theme_cowplot()) +
+  scale_y_reverse() +
+  scale_x_continuous(limits = c(0, 1200), position = "top")
+
+
+ggdraw() +
+  draw_image("../grooveFinder/man/figures/after-before.png", x = 0.05, y = 0, height = 1.25, width = 1) +
+  draw_plot(p)
+
+x3p <- read_x3p("../../../../../Volumes/Samsung_T3/Phoenix/Gun 1-L5/B1/L1.x3p")
+
+grooves <- get_grooves_hough(x3p, adjust = 100)  
+
+a<- get_mask_hough(x3p, grooves)
+
+image_x3p(a, zoom = 0.4, file = "images/phoenix-gun-1-l5-b1-l1-groove-estimation-example-1.png")  
+
+
+x3p <- read_x3p("../../../../../Volumes/Samsung_T3/Hamby44/Barrel 7/Bullet 1/Scan 1/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
+
+grooves <- get_grooves_hough(x3p, adjust = 100)  
+
+crosscut <- x3p %>% x3p_crosscut_optimize()  
+ccdata <- x3p_crosscut(x3p)
+ccdata %>%
+  ggplot(aes(x = x, y = value)) + 
+  geom_vline(xintercept = 335) +
+  geom_vline(xintercept = 2300) +
+  geom_line() +
+  theme_bw()
+
+ggsave("images/crosscut-motivating-image.png")
+
+
+x3p <- read_x3p("../../../../../Volumes/Samsung_T3/Hamby44/Barrel 7/Bullet 1/Scan 1/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
+
+grooves <- get_grooves_hough(x3p, adjust = 180)  
+
+crosscut <- x3p %>% x3p_crosscut_optimize()  
+ccdata <- x3p_crosscut(x3p)=
+
+grooves.cc <- list(groove = c(grooves$left.groove.fit(crosscut), grooves$right.groove.fit(crosscut)))
+
+sigs <- cc_get_signature(ccdata, grooves.cc, span1 = 0.75, span2 = 0.3)
+
+sigs %>% 
+  filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x)) + 
+  geom_line(aes(y = raw_sig), colour = "grey30") +
+  geom_line(aes(y = sig), colour = "grey70") +
+  ylim(c(-5,5)) +
+  theme_bw()
+
+ggsave("images/signal-motivating-example-good-grooves.png")
+
+grooves <- get_grooves_hough(x3p, adjust = 0)  
+
+crosscut <- x3p %>% x3p_crosscut_optimize()  
+ccdata <- x3p_crosscut(x3p)=
+  
+  grooves.cc <- list(groove = c(grooves$left.groove.fit(crosscut), grooves$right.groove.fit(crosscut)))
+
+sigs <- cc_get_signature(ccdata, grooves.cc, span1 = 0.75, span2 = 0.3)
+
+sigs %>% 
+  filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x)) + 
+  geom_line(aes(y = raw_sig), colour = "grey30") +
+  geom_line(aes(y = sig), colour = "grey70") +
+  theme_bw()
+
+ggsave("images/signal-motivating-example-bad-grooves.png", width = 4.5, height = 2.25)
+
