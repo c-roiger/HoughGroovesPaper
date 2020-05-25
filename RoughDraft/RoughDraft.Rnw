@@ -1,5 +1,5 @@
 \documentclass[12pt]{article}
-\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx,subcaption, tikz}
+\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx,subcaption, tikz, caption}
 \usepackage[authoryear]{natbib} % Natbib options, [numbers] would give numerical citations.
 \bibpunct{(}{)}{;}{a}{,}{,} % Tells it how you want references displaying in the text.
 
@@ -35,14 +35,47 @@
 
 When firearms examiners try to match fired bullets they use a form of visual inspection to identify whether two bullets were fired from the same gun. As a bullet is being fired, manufaturing defects in the rifling of the gun should leave a unique set of striation. Firearms examiners utlizie the striae to make identifications by matching striation patterns between bullets. As three dimensional scanning has improved, new methods of bullet identification have developed that rely on established statistical or machine learning processes to automate bullet identification.
 
+include lack of subjectivity comment here between two paragrpahs
+
 One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm which removes unnecessary structure from bullet scans and made a random forest model that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm which removes unnecessary bullet structure is the identification of "shoulder locations" of bullet lands to improve the extraction of bullet signatures. Below in figure \ref{fig:crosscut-motivation} is a two-dimensional visualization of a single crosscut from a bullet land. 
 
-\begin{figure}[ht!]
-  \centering
-  \includegraphics{../images/crosscut-motivating-image.png}
-  \caption{A single crosscut from the Hamby 44 Bullet Set, Barrel 7, Bullet 1, Land 3}
-  \label{fig: crosscut-motivation}
-\end{figure}
+<<r warning = F, messages = F, echo= FALSE>>=
+library(grooveFinder)
+library(x3ptools)
+library(bulletxtrctr)
+library(ggplot2)
+library(tidyr)
+
+@
+
+
+<<r crosscut-motivation, echo = FALSE, figs.only=TRUE>>=
+
+x3p <- read_x3p("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
+
+grooves <- get_grooves_hough(x3p, adjust = 100)  
+
+crosscut <- x3p %>% x3p_crosscut_optimize()  
+ccdata <- x3p_crosscut(x3p)
+
+ccdata %>%
+  ggplot(aes(x = x, y = value)) + 
+  geom_vline(xintercept = 335) +
+  geom_vline(xintercept = 2300) +
+  geom_line() +
+  theme_bw()
+# 
+# ggsave("images/crosscut-motivating-image.png")
+
+@
+
+
+% \begin{figure}[ht!]
+%   \centering
+%   \includegraphics{../images/crosscut-motivating-image.png}
+%   \caption{A single crosscut from the Hamby 44 Bullet Set, Barrel 7, Bullet 1, Land 3}
+%   \label{fig:crosscut-motivation}
+% \end{figure}
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulers of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
 \newpage
@@ -58,10 +91,10 @@ The predominant feature of this crosscut is the curvature of the barrel as well 
   \includegraphics{../images/signal-motivating-example-bad-grooves.png}
   \caption{A signature extracted from the Hamby 44 set barrel 7, bullet 1, land 3 with improperly removed grooves}
 \end{subfigure}
-    \label{fig: sig-comparison}
+    \label{fig:sig-comparison}
 \end{figure}
 
-In figure \ref{fig: sig-comparison} we see a comparison between two signatures one where the grooves are properly identified and one where the grooves are improperly identified. When the right-hand groove is included the residuals are dominated by the bullet groove and the striae are no longer as pronounced. So accurately identifying the bullet grooves is supremely important for bullet identification. We propose a new method for identifying bullet grooves that utilizes an image analysis technique known as the Hough transform to identify prominent features of the bullet land. 
+In figure \ref{fig:sig-comparison} we see a comparison between two signatures one where the grooves are properly identified and one where the grooves are improperly identified. When the right-hand groove is included the residuals are dominated by the bullet groove and the striae are no longer as pronounced. So accurately identifying the bullet grooves is supremely important for bullet identification. We propose a new method for identifying bullet grooves that utilizes an image analysis technique known as the Hough transform to identify prominent features of the bullet land. 
 
 \subsection{Previous Work}
 
@@ -103,7 +136,7 @@ In broad terms, the Hough Transform is a feature extraction technique for detect
 The point of intersection in the feature space, then corresponds to the parameters used to describe the edge in the (x,y)-plane that the two detected points lie upon. A two dimensional array called the "accumulator array" is used to keep track of features detected.  The accumulator array covers the entirety of the feature space separated into a user-specified number of bins. For each set of features detected the bin in the accumulator array associated with that set of features is incremented. So in theory, strong features should have higher values in their associated bin because there is a larger number of pixels detected that all have the same set of features in the feature space. 
 
 
-\XXX HH: introductions are usually written last - until then just collect all of the talking points that you need to introduce XXX
+XXX HH: introductions are usually written last - until then just collect all of the talking points that you need to introduce XXX
 
 Talking points:
 
@@ -115,6 +148,8 @@ in no particular order
 \item PCAST report and NRC have critized a lot of forensic for its lack of scientific validity - FTE examinations are subjective and do not have established error rates. XXX cite reports
 \item Paper by Hare et al introduces an algorithm for an automatic matching method of bullets based on 3d scans of land engraved areas (LEAs): objective and allows establishing error rates for different situations based on studies (firearm/ammunition combination) XXX overview picture?
 \item Part of the matching process in the Hare et al paper is to locate the location of the groove engraved areas and separate from the leand engraved areas. The rollapply method suggested in the paper is not working 100\% and leads to erroneous conclusions down stream in the analysis. 
+\item To measure the success of the Area of mis-identification of measure cite kiegan
+\item Anything that is not mine, needs to go into the intro backgrounds section of the introduction
 \end{itemize}
 
 \section{Background}
@@ -142,10 +177,13 @@ In order to best identify the GEAs we first want to diminish noise in the image.
       \label{fig: edge2}
       \end{subfigure}
       \caption{Side-by-side comparison of Hamby 252 Bullet using both magnitude thresholding and Canny edge detection}
-      \label{fig: canny}
+      \label{fig:canny}
 \end{figure}
 
-As shown in Figure \ref{fig: canny} the striae in the LEA are much more pronunced than in the image with only strong edges. We wish to focus on only detecting GEAs, so detecting an increased number of striae through Canny edge detection is not useful for our algorithm. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. While changing the number of bins does not seem to effect the processing time of the Hough transform, having a larger number of bins increases the number of extraneous detected lines in the image. For example in Figure \ref{fig: hough-compare}\subref{fig: hough1} we can see that the Hough transforms with 100 bins does a perfectly aedequate job of picking up the suspected grooves of the bullet. Therefore the extra detected lines in \ref{fig: hough-compare}\subref{fig: hough2} are not used in our analysis so we chose to limit our bin number as a result.
+In 
+
+
+As shown in Figure \ref{fig:canny} the striae in the LEA are much more pronunced than in the image with only strong edges. We wish to focus on only detecting GEAs, so detecting an increased number of striae through Canny edge detection is not useful for our algorithm. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. While changing the number of bins does not seem to effect the processing time of the Hough transform, having a larger number of bins increases the number of extraneous detected lines in the image. For example in Figure \ref{fig: hough-compare}\subref{fig: hough1} we can see that the Hough transforms with 100 bins does a perfectly aedequate job of picking up the suspected grooves of the bullet. Therefore the extra detected lines in \ref{fig: hough-compare}\subref{fig: hough2} are not used in our analysis so we chose to limit our bin number as a result.
 
 \begin{figure}[!ht]
     \centering
@@ -230,6 +268,8 @@ Once features are chosen to describe both the left and right hand grooves of the
   \caption{Hough groove estimate visualized over whole of bullet land for the Phoenix set gun 1-L5 bullet one land one with adjust set to 30.}
   \label{fig:get-mask-hough-example-one}
 \end{figure}
+
+\section{Results}
 
 
 
