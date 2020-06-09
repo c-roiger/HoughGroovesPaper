@@ -45,11 +45,13 @@ library(x3ptools)
 library(bulletxtrctr)
 library(ggplot2)
 library(tidyr)
-
+library(knitr)
+opts_chunk$set(echo=FALSE)
 @
 
 
-<<r crosscut-motivation, echo = FALSE, figs.only=TRUE>>=
+\begin{figure}[h!]
+<<r fig = TRUE, fig.align='center', message=FALSE>>=
 
 x3p <- read_x3p("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
 
@@ -57,18 +59,24 @@ grooves <- get_grooves_hough(x3p, adjust = 100)
 
 crosscut <- x3p %>% x3p_crosscut_optimize()  
 ccdata <- x3p_crosscut(x3p)
+grooves <- cc_locate_grooves(ccdata, method = "rollapply", adjust = 30)
 
 ccdata %>%
   ggplot(aes(x = x, y = value)) + 
-  geom_vline(xintercept = 335) +
-  geom_vline(xintercept = 2300) +
+  geom_vline(xintercept = grooves$groove[1]) +
+  geom_vline(xintercept = grooves$groove[2]) +
   geom_line() +
   theme_bw()
+
+
+
 # 
 # ggsave("images/crosscut-motivating-image.png")
 
 @
-
+  \caption{help!}
+  \label{fig: crosscut-motivation}
+\end{figure}
 
 % \begin{figure}[ht!]
 %   \centering
@@ -268,6 +276,8 @@ Once features are chosen to describe both the left and right hand grooves of the
   \caption{Hough groove estimate visualized over whole of bullet land for the Phoenix set gun 1-L5 bullet one land one with adjust set to 30.}
   \label{fig:get-mask-hough-example-one}
 \end{figure}
+
+One issue with 
 
 \section{Results}
 
