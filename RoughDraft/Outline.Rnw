@@ -46,13 +46,13 @@
         \begin{enumerate}
           \item[1.] Paper by Hare et al introduces an algorithm for an automatic matching method of bullets based on 3d scans of land engraved areas (LEAs): objective and allows establishing error rates for different situations based on studies (firearm/ammunition combination) XXX overview picture?
           \item[2.] Part of the matching process in the Hare et al paper is to locate the location of the groove engraved areas and separate from the land engraved areas. The rollapply method suggested in the paper is not working 100\% and leads to erroneous conclusions down stream in the analysis. 
-          \item[3.] 
+          \item[3.] Chu et al (2013?) uses Canny Edge detection to sharpen the image of striae in a bullet land and determine "valid striae". Previous work by these authors also highlight the use of CCF for finding the effective correlation area which is used to generate an average profile of the bullet signature.(Chu et al. 2010)
         \end{enumerate}
       \item[C.] Background- Hough Transform and Image Prep
         \begin{enumerate}
-          \item[1.] Data comes in form of scans, scans are a result of high-resolution 3d microscopy; each scan consists of height measurements collected over a regular x-y grid. This makes the data somewhat similar to a (grey-scale) image.
+          \item[1.] Data comes in form of scans, scans are a result of high-resolution 3d microscopy; each scan consists of height measurements collected over a regular x-y grid. This makes the data somewhat similar to a (grey-scale) image. More information needed about data sources
           \begin{enumerate}
-            \item[a.] Orientation of the image differs from traditional views of the x-y axis due to the way imaes are stord in memory
+            \item[a.] Orientation of the image differs from traditional views of the x-y axis due to the way imaes are stored in memory connect to CImage library
             \item[b.] Show bullet scan and explain parts.
           \end{enumerate}
           \item[2.] The Hough Transform is a computer vision algorithm that detects certain shapes or features in a 2-dimensional image
@@ -91,12 +91,60 @@
 \end{figure}
             \item[c.] Users can select the number of bins that divide the feature space. Each line in the feature space is associated with a set of two parameters. This can be visually represented as a grid with the number of squares in the grid determined by the bins. Each time a line is detected that falls within one of the feature space bins, that bin is incremented. INSERT TIKZ PLOT HERE OF FEATURE SPACE GRID
             \item[d.] The resulting output of Hough transforms in our case is thus a series of linear equations with a corresponding count of the times this particular set of features was detected. Essentially the Hough score, as it is often called, counts the number of points detected in the image that all line on the same line.
-            \item[e.] We note that the way the Hough lines are parametrized in the Hessian Normal Form. 
+            \item[e.] We note that Hough lines are parametrized in the Hessian Normal Form. Instead of the line being defined by the slope and intercept, it is defined by two parameters $\theta$ and $\rho$.
+            XXX insert tikzpicture here of hessian normal form oriented over bullet land image XXX
           \end{enumerate}
         \end{enumerate}
       \item[D.] Evaluation of Results
+      \begin{enumerate}
+        \item[1.]  To evaluate the success of our results we will utilize a method developed by Kiegan Rice that calculates the "area of misidentification"
+        \item[2.]  A series of consecutive crosscuts is taken from the bullet land based on the optimized crosscut from `x3p\_crosscut\_optimize`, five rows of data above and below the optimized crosscut. An average is then created from these crosscuts.
+        \item[3.] A robust loess fit is then created from the averaged crosscuts, a prediction is made based on the robust loess fit on our summarized crosscut. We then calculate the residual of the robust loess fit and the absolute residual
+        \item[4.] We then calculate the groove locations using the Hough method and input the manually identified groove locations. To calculate the area of misidentification we take the sum of the absolute value of the robust loess fit residuals between the identified grooves location and the predicted groove location and multiply it by the resolution of the x3p object. 
+        XXX need nice picture explaining differenceXXX
+      \end{enumerate}
     \end{enumerate}
   \item[II.] Methods
+  \begin{enumerate}
+    \item[A.] Application of Hough transform and Pre-processing
+    \begin{enumerate}
+      \item[1.] Scans can be inputted as an x3p or as a dataframe, but needs to be oriented in the proper fashion. i.e. width is larger than height. We then save some of the x3p information such as width, height, and resolution. 
+      \item[2.] We have a significant amount of missing data in our scans, whether it is from break off or because the light of the high resolution scans cannot penetrate far enough into grooves. We have decided to impute these NAs by replacing them with z-values that are 5\% higher than the maximum height found in the scan. 
+      \item[2.]Scans are then converted to CImages where a gradient image in the x and y direction are created. We then find the gradient magnitude of each image.
+      \item[2.] Each gradient image is thresholded so only strong features are selected, those in the 99th percentile and the Hough transform is applied from the imager packages ("hough\_line"). The output of the `hough\_line` function is a dataframe containing $\rho$, $\theta$, and a score. 
+    \end{enumerate}
+    \item[B.] Line selection and Output
+    \begin{enumerate}
+      \item[1.] We eliminate all duplicate lines detected in the image and we transform the $\theta$ parameter to be between $-\pi$ and $\pi$ rather than between 0 to $2\pi$. This allows us to filter any lines that are not roughly vertica, from this information we can then find both the x intercept and the y intercept of the each line detected in the image.
+      \item[2.] We then calculate what is known as x-bottom and x-top which is where each line detected in the image intersects with the top and bottom of the bullet land. This can then be used to calculate the slope of each line with respect to the y-direction. Explain why the y-direction is more robust. XX insert picture of calculating xtop and xbottom from over bullet landXX
+      \item[3.] As mentioned before the score associated with the Hough transform is essentially the number of points detected on each line in the image so longer lines will necessarily have a higher possible maximum score. To account for this we create a normalized score. XX insert normalizd score graphic hereXXX
+      \item[4.] Segments are then seperated into right hand and left hand segments (take the left most fifty percent of the data etc.). We then select the line with the largest normalized score on each side of the image. If the line with the largest normalized score is further to the left than the left most fourth of the data, we arbitrarily set the groove at the lower 1/4th of the image. A similar process is undertaken for the right hand groove. 
+      \item[5.] The final output is a function to describe the detected groove in microns. 
+    \end{enumerate}
+  \end{enumerate}
+  \item[IV.] Results
+    Some sort of presentation of scores from Phoenix, Hamby, and Houston showing similar patterns across each
 \end{enumerate}
+% << echo = F, fig=TRUE>>=
+% library(ggplot2)
+% library(cowplot)
+% p <- ggplot() +
+%   geom_segment(aes(x =440, y = 0, xend = 60, yend = 300), lwd= 2, colour = "orange") +
+%   geom_segment(aes(x =0, y = 0, xend = 310, yend = 100), lwd= 2, colour = "deepskyblue1") +
+%   geom_curve(aes(x = 100, y = 0, xend = 50, yend = 19), lwd = 1, colour = "deepskyblue1", curvature = -0.7) + 
+%   geom_segment(aes(x = 260, y=82, xend = 290, yend = 63), lwd = 2, colour = "deepskyblue1") +
+%   geom_segment(aes(x = 335, y = 76, xend = 290, yend = 63), lwd = 2, colour = "deepskyblue1") +
+%   annotate('text', x = 150, y = 20, 
+%         label = "theta",parse = TRUE,size=6, colour = "#e6e0ff") +
+%     annotate('text', x = 150, y = 80, 
+%         label = "rho", parse = TRUE, size=6, colour = "#e6e0ff") +
+%   scale_y_reverse() +
+%   scale_x_continuous(limits = c(0, 1000), position = "top")
+% 
+% 
+%ggdraw() +
+%  cowplot::draw_image("", x = 0.05, y = 0, height = 1.25, width = 1) +
+%  draw_plot(p)
 
+% @
 \end{document}
