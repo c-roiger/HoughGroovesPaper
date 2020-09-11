@@ -51,7 +51,7 @@ opts_chunk$set(echo=FALSE)
 \begin{figure}[h!]
 <<r fig = TRUE, fig.align='center', message=FALSE>>=
 
-x3p <- read_x3p("/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
+x3p <- read_x3p("data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
 
 grooves <- get_grooves_hough(x3p, adjust = 100)  
 
