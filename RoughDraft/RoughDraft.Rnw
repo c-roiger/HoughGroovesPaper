@@ -23,10 +23,11 @@
 \parindent         0pt   % sets leading space for paragraphs
 \pagestyle{empty}        % Uncomment if don't want page numbers
 \pagestyle{fancyplain}
+\author{Charlotte Roiger}
+\title{Hough Transforms for Groove Identification in Land Engraved Areas (LEAs) on Fired Bullets}
 
-
+\titlepage
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 \lhead{\today}
 \chead{CSAFE - Hough Grooves Document Process}
 \rhead{Page \thepage\ of \pageref{LastPage}}
@@ -37,34 +38,41 @@ When firearms examiners try to match fired bullets they use a form of visual ins
 
 As three dimensional scanning has improved, new methods of bullet identification have developed that rely on established statistical or machine learning processes to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm which removes unnecessary structure from bullet scans and made a random forest model that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm which removes unnecessary bullet structure is the identification of "shoulder locations" of bullet lands to improve the extraction of bullet signatures. Below in figure \ref{fig:crosscut-motivation} is a two-dimensional visualization of a single crosscut from a bullet land. 
 
-<<r warning = F, messages = F, echo= FALSE>>=
+<<r setup, warning = F, messages = F, echo= FALSE, cache=FALSE>>=
 library(grooveFinder)
 library(x3ptools)
 library(bulletxtrctr)
 library(ggplot2)
 library(tidyr)
 library(knitr)
-opts_chunk$set(echo=FALSE)
+library(usethis)
+opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
 @
 
 
-\begin{figure}[h!]
-<<r fig = TRUE, fig.align='center', message=FALSE>>=
 
-x3p <- read_x3p("data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
+<<r crosscut-motivation, echo=FALSE, fig.align="center", message=FALSE, fig.height = 3,  fig.cap="Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.">>=
+if (!file.exists("../data/ccdata.rds")) {
+x3p <- read_x3p("../data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
 
 grooves <- get_grooves_hough(x3p, adjust = 100)  
 
 crosscut <- x3p %>% x3p_crosscut_optimize()  
 ccdata <- x3p_crosscut(x3p)
+saveRDS(ccdata, "../data/ccdata.rds")
+} else {
+  ccdata <- readRDS("../data/ccdata.rds")  
+}
 grooves <- cc_locate_grooves(ccdata, method = "rollapply", adjust = 30)
 
 ccdata %>%
-  ggplot(aes(x = x, y = value)) + 
-  geom_vline(xintercept = grooves$groove[1]) +
-  geom_vline(xintercept = grooves$groove[2]) +
+  ggplot(aes(x = x/1000, y = value)) + 
+  geom_vline(xintercept = grooves$groove[1]/1000, colour = "darkblue") +
+  geom_vline(xintercept = grooves$groove[2]/1000, colour="darkblue") +
   geom_line() +
-  theme_bw()
+  theme_bw() +
+  ylab("Relative height measurements (in micron)") +
+  xlab("Relative width measurements (in mm)")
 
 
 
@@ -72,9 +80,6 @@ ccdata %>%
 # ggsave("images/crosscut-motivating-image.png")
 
 @
-  \caption{help!}
-  \label{fig: crosscut-motivation}
-\end{figure}
 
 % \begin{figure}[ht!]
 %   \centering
