@@ -36,32 +36,39 @@
 
 When firearms examiners try to match fired bullets they use a form of visual inspection to identify whether two bullets were fired from the same gun. As a bullet is being fired, manufacturing defects in the rifling of the gun should leave a unique set of striation. Firearms examiners utilize the striae to make identifications by matching striation patterns between bullets. A 2005 court case known as \textit{United States vs. Green}, established that firearms examiners cannot conclude that a specific bullet was fired from a specific gun ``to the exclusion of every other firearm in the world". That in fact the conclusion of a definitive match stretches beyond the data and methodology available to firearms examiners at the time.  Similarly, in 2009 the National Academy of Sciences published a report that criticized the scientific validity of forensic firearms identification and many other forensic methods. Both of these reports highlight the need for objective quantitative assessments of firearms identification. 
 
-As three dimensional scanning has improved, new methods of bullet identification have developed that rely on established statistical or machine learning processes to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm which removes unnecessary structure from bullet scans and made a random forest model that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm which removes unnecessary bullet structure is the identification of "shoulder locations" of bullet lands to improve the extraction of bullet signatures. Below in figure \ref{fig:crosscut-motivation} is a two-dimensional visualization of a single crosscut from a bullet land. 
+As three dimensional scanning has improved, new methods of bullet identification have developed that rely on established statistical or machine learning processes to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm which removes unnecessary structure from bullet scans and made a random forest model that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm which removes unnecessary bullet structure is the identification of "shoulder locations" of bullet lands to improve the extraction of bullet signatures. Below in figure \ref{fig:crosscut-motivation} is a two-dimensional visualization of a single crosscut from a bullet land.  SEEING MESSAGES?
 
 <<r setup, warning = F, messages = F, echo= FALSE, cache=FALSE>>=
 library(grooveFinder)
 library(x3ptools)
 library(bulletxtrctr)
+library(imager)
 library(ggplot2)
+library(raster)
 library(tidyr)
 library(knitr)
+library(fixedpoints)
+library(grid)
+library(png)
 library(usethis)
+library(cowplot)
+library(magick)
 opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
 @
 
 
-
-<<r crosscut-motivation, echo=FALSE, fig.align="center", message=FALSE, fig.height = 3,  fig.cap="Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.">>=
+<<r crosscut-motivation, echo=FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3,  fig.cap="Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.">>=
 if (!file.exists("../data/ccdata.rds")) {
 x3p <- read_x3p("../data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
 
-grooves <- get_grooves_hough(x3p, adjust = 100)  
-
 crosscut <- x3p %>% x3p_crosscut_optimize()  
 ccdata <- x3p_crosscut(x3p)
+cimg <- as.cimg(x3p$surface.matrix)
+saveRDS(cimg, "../data/cimg.rds")
 saveRDS(ccdata, "../data/ccdata.rds")
 } else {
-  ccdata <- readRDS("../data/ccdata.rds")  
+  ccdata <- readRDS("../data/ccdata.rds")
+  cimg <- readRDS("../data/cimg.rds")
 }
 grooves <- cc_locate_grooves(ccdata, method = "rollapply", adjust = 30)
 
@@ -81,29 +88,54 @@ ccdata %>%
 
 @
 
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/crosscut-motivating-image.png}
-%   \caption{A single crosscut from the Hamby 44 Bullet Set, Barrel 7, Bullet 1, Land 3}
-%   \label{fig:crosscut-motivation}
-% \end{figure}
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
 \newpage
 
-\begin{figure}[ht!]
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics{../images/signal-motivating-example-good-grooves.png}
-  \caption{A signature extracted from the Hamby 44 set barrel 7, bullet 1, land 3 with properly removed grooves}
-\end{subfigure}
-\begin{subfigure}{.5\textwidth}
-  \centering
-  \includegraphics{../images/signal-motivating-example-bad-grooves.png}
-  \caption{A signature extracted from the Hamby 44 set barrel 7, bullet 1, land 3 with improperly removed grooves}
-\end{subfigure}
-    \label{fig:sig-comparison}
-\end{figure}
+<<r signal-motivation-good, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with properly identified groove engraved areas">>=
+
+sigs <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.3)
+
+sigs %>% 
+  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x)) + 
+  geom_line(aes(y = raw_sig), colour = "grey30") +
+  geom_line(aes(y = sig), colour = "grey70") +
+  ylim(c(-5,5)) +
+  theme_bw()
+
+@
+
+
+<<r signal-motivation-bad, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with improperly identified groove engraved areas">>=
+grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2] - 50))
+
+sigs <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.3)
+
+sigs %>% 
+  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x)) + 
+  geom_line(aes(y = raw_sig), colour = "grey30") +
+  geom_line(aes(y = sig), colour = "grey70") +
+  ylim(c(-5,5)) +
+  theme_bw()
+
+@
+
+
+% \begin{figure}[ht!]
+% \begin{subfigure}{.5\textwidth}
+%   \centering
+%   \includegraphics{../images/signal-motivating-example-good-grooves.png}
+%   \caption{A signature extracted from the Hamby 44 set barrel 7, bullet 1, land 3 with properly removed grooves}
+% \end{subfigure}
+% \begin{subfigure}{.5\textwidth}
+%   \centering
+%   \includegraphics{../images/signal-motivating-example-bad-grooves.png}
+%   \caption{A signature extracted from the Hamby 44 set barrel 7, bullet 1, land 3 with improperly removed grooves}
+% \end{subfigure}
+%     \label{fig:sig-comparison}
+% \end{figure}
 
 In figure \ref{fig:sig-comparison} we see a comparison between two signatures one where the grooves are properly identified and one where the grooves are improperly identified. When the right-hand groove is included the residuals are dominated by the bullet groove and the striae are no longer as pronounced. So accurately identifying the bullet grooves is supremely important for bullet identification. We propose a new method for identifying bullet grooves that utilizes an image analysis technique known as the Hough transform to identify prominent features of the bullet land. 
 
@@ -163,44 +195,54 @@ The point of intersection in the feature space, then corresponds to the paramete
 
 In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unfortunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be "strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the Canny Edge algorithm increases processing time by about 35 seconds per image and actually highlights more striae and break-off. 
 
-\begin{figure}[!ht]
-    \centering
-    \begin{subfigure}{.5\textwidth}
-      \centering
-      \includegraphics[width = .9\textwidth]{../images/Hamby252_Bullet1_Land3_Strong_edge.png}
-      \caption{Edges with magnitudes in the 99th percentile}
-      \label{fig: edge1}
-      \end{subfigure}%
-    \begin{subfigure}{.5\textwidth}
-      \centering
-      \includegraphics[width = .9\textwidth]{../images/Hamby252_Bullet1_Land3_Canny_Edge.png}
-      \caption{Edges improved with Canny edge detection}
-      \label{fig: edge2}
-      \end{subfigure}
-      \caption{Side-by-side comparison of Hamby 252 Bullet using both magnitude thresholding and Canny edge detection}
-      \label{fig:canny}
-\end{figure}
+<<r strong-edge, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges with magnitudes in the 99th percentile">>=
 
+dx <- imgradient(cimg, "x")
+dy <- imgradient(cimg, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+
+strong <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+
+strong.raster <- imager:::as.data.frame.cimg(strong)
+ggplot() +
+  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE)
+@
+
+<<r canny-edge, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges enhanced with Canny Edge Detection">>=
+
+t2 <- quantile(grad.mag, .99, na.rm = TRUE)
+t1 <- quantile(grad.mag, .8, na.rm = TRUE)
+
+weak <- grad.mag %inr% c(t1,t2)
+
+overlap <- grow(strong, 3) & weak
+strong.new <- strong | overlap
+
+expand.strong <- function(ws){
+  overlap <- grow(ws$strong, 3) & ws$weak
+  ws$strong[overlap] <- TRUE
+  ws$weak[overlap <- FALSE]
+  ws 
+}
+
+hystFP <- fp(expand.strong)
+a <- Sys.time()
+out <- list(strong = strong, weak = weak) %>% hystFP
+b <- Sys.time(); b-a
+
+hyst.raster <- imager:::as.data.frame.cimg(out$strong)
+
+ggplot() +
+  geom_raster(data = hyst.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE)
+@
 
 As shown in Figure \ref{fig:canny} the striae in the LEA are much more pronounced than in the image with only strong edges. We wish to focus on only detecting GEAs, so detecting an increased number of striae through Canny edge detection is not useful for our algorithm. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. While changing the number of bins does not seem to effect the processing time of the Hough transform, having a larger number of bins increases the number of extraneous detected lines in the image. For example in Figure \ref{fig: hough-compare}\subref{fig: hough1} we can see that the Hough transforms with 100 bins does a perfectly adequate job of picking up the suspected grooves of the bullet. Therefore the extra detected lines in \ref{fig: hough-compare}\subref{fig: hough2} are not used in our analysis so we chose to limit our bin number as a result.
-
-\begin{figure}[!ht]
-    \centering
-      \begin{subfigure}{.5\textwidth}
-      \centering
-      \includegraphics[width = .9\textwidth]{../images/Houston_BarrelF_Bullet1_Hough_Bin100}
-      \caption{Hough Transform with 100 bins}
-      \label{fig: hough1}
-      \end{subfigure}%
-    \begin{subfigure}{.5\textwidth}
-      \centering
-      \includegraphics[width = .9\textwidth]{../images/Houston_BarrelF_Bullet1_Hough_Bin900}
-      \caption{Hough Transform with 900 bins}
-      \label{fig: hough2}
-      \end{subfigure}
-      \caption{Side-by-side comparison of Houston Barrel F Land 1 Hough Transformation. Hough lines are filtered by having scores in the 99.9th percentile, and having central angles less than $\frac{\pi}{16}$.}
-      \label{fig: hough-compare}
-\end{figure}
 
 We make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. It is worth noting that the original output of the `` \texttt{hough\char`_lines}" functions have angles ranging from 0 to $2\pi$. So to make selecting lines from our desired range, easier we chose to transform any angle greater than $\pi$, to instead be from 0 to $-\pi$ by subtracting $2\pi$ from the original theta angle. Therefore we select only the Hough lines that have theta angles from the positive x-axis less than $\frac{\pi}{16}$ and greater than $\frac{-\pi}{16}$. The parametrization produced by `` \texttt{hough\char`_lines}" is of the form:
 
@@ -208,23 +250,45 @@ We make the assumption that scans are oriented properly and as such, most Hough 
 $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 \end{center}
 
-Where $\rho$ represents the length of the normalized orthogonal vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. In Figure \ref{fig: parametrization} we see an example of how Hough transforms parametrize a line. In this figure, the orange line represents an example of a detected Hough line. The teal line connecting the origin to the orthogonal bisector of our detected Hough line represents the vector denoted $\rho$ in our above equation. Similarly the teal arc below represents the angle, $\theta$, which is the difference between the top of the image and the orthogonal bisector. 
+Where $\rho$ represents the length of the normalized orthogonal vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. In Figure ref{fig: parametrization} we see an example of how Hough transforms parametrize a line. In this figure, the orange line represents an example of a detected Hough line. The teal line connecting the origin to the orthogonal bisector of our detected Hough line represents the vector denoted $\rho$ in our above equation. Similarly the teal arc below represents the angle, $\theta$, which is the difference between the top of the image and the orthogonal bisector. 
 
-\begin{figure}[ht!]
-  \centering
-  \includegraphics{../images/hessian-example.png}
-  \caption{Example of Hessian Normal Form parametrization overlaid a bullet scan}
-  \label{fig: parametrization}
-\end{figure}
+<<r hessian-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges with magnitudes in the 99th percentile">>=
 
-We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$.  We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The top is the x-intercept calculated previously, however to calculate the bottom intersection of the bullet land we utilize some geometric properties. We can draw a perpendicular line from the x-intercept at the top of the land to the bottom of the land creating a right triangle as shown below in \ref{fig: calcxbottom}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the x-intercept to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the x-intercept is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{height}$. So the index of the bottom intersection of the bullet land is equivalent to top-intersection - $\delta$. 
+p <- ggplot() +
+  geom_segment(aes(x =1000, y = 0, xend = 0, yend = 250), lwd= 2, colour = "orange") +
+  geom_segment(aes(x =0, y = 0, xend = 590, yend = 100), lwd= 2, colour = "deepskyblue1") +
+  geom_curve(aes(x = 100, y = 0, xend = 50, yend = 10), lwd = 1, colour = "deepskyblue1", curvature = -0.7) + 
+  geom_segment(aes(x = 580, y=73, xend = 650, yend = 85), lwd = 2, colour = "deepskyblue1") +
+  geom_segment(aes(x = 520, y = 90, xend = 580, yend = 75), lwd = 2, colour = "deepskyblue1") +
+  annotate('text', x = 150, y = 10, 
+           label = "theta",parse = TRUE,size=6, colour = "#000000") +
+  annotate('text', x = 150, y = 60, 
+           label = "rho", parse = TRUE, size=6, colour = "#e6e0ff") +
+  theme_set(cowplot::theme_cowplot()) +
+  scale_y_reverse() +
+  scale_x_continuous(limits = c(0, 1200), position = "top")
 
-\begin{figure}[ht!]
-  \centering
-  \includegraphics{../images/calc-xbottom.png}
-  \caption{Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA}
-  \label{fig: calcxbottom}
-\end{figure}
+
+cowplot::ggdraw() +
+  cowplot::draw_image("../images/after-before.png", x = 0.05, y = 0, height = 1.25, width = 1) +
+  cowplot::draw_plot(p)
+@
+% 
+% \begin{figure}[ht!]
+%   \centering
+%   \includegraphics{../images/hessian-example.png}
+%   \caption{Example of Hessian Normal Form parametrization overlaid a bullet scan}
+%   \label{fig: parametrization}
+% \end{figure}
+
+We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$.  We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The top is the x-intercept calculated previously, however to calculate the bottom intersection of the bullet land we utilize some geometric properties. We can draw a perpendicular line from the x-intercept at the top of the land to the bottom of the land creating a right triangle as shown below in ref{fig: calcxbottom}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the x-intercept to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the x-intercept is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{height}$. So the index of the bottom intersection of the bullet land is equivalent to top-intersection - $\delta$. 
+
+% \begin{figure}[ht!]
+%   \centering
+%   \includegraphics{../images/calc-xbottom.png}
+%   \caption{Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA}
+%   \label{fig: calcxbottom}
+% \end{figure}
 
 The utility for calculating the top and bottom intercept of our bullet land is that it allows us to calculate the slope of each Hough line with respect to the y-direction. 
 \begin{center}
@@ -235,23 +299,38 @@ Traditionally slope with respect to the x-direction is chosen for describing the
 
 As discussed before, the Hough transform outputs a score that corresponds to the number of pixels detected on a line that can give us an indication of the strength of the feature detected. Theoretically, we would expect the strongest lines in our image to be the grooves on either side of the bullet land. So the problem arises of how best to select strong edges. Rather than simply filter scores on some arbitrary threshold, we normalize the Hough scores by the largest possible score that could be achieved for each set of features detected. The reason for this is that longer lines will have a larger Hough score simply by virtue of having a larger number of possible detectable pixels. So if we want to compare the strength of various lines, regardless of line length, we need to normalize each score associated with each line detected.  
 
-\begin{figure}[ht!]
-  \centering
-  \includegraphics{../images/calc-theoretical-max.png}
-  \caption{Demonstration of calculation of theoretical maximum Hough score using SOH-CAH-TOA}
-  \label{fig:calcmaxscore}
-\end{figure}
+% \begin{figure}[ht!]
+%   \centering
+%   \includegraphics{../images/calc-theoretical-max.png}
+%   \caption{Demonstration of calculation of theoretical maximum Hough score using SOH-CAH-TOA}
+%   \label{fig:calcmaxscore}
+% \end{figure}
 
 
-We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure \ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. 
-\begin{figure}[ht!]
-  \centering
-  \includegraphics{../images/phnx-1-m2-b1-l1-middle-fifty-demo.png}
-  \caption{Middle fifty percent of the bullet land marked by two cyan coloured vertical lines imposed over the Phoenix set Gun 1-M2 Bullet 1 Land 1 scan}
-  \label{fig:middlefifty}
-\end{figure}
+We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. 
 
-To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in figure \ref{fig:middlefifty} where the middle fifty percent of the bullet land is bordered by cyan colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
+<<r middle-fifty, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges with magnitudes in the 99th percentile">>=
+
+lfourth <- width(strong)/4
+ufourth <- 3*width(strong)/4
+
+ggplot()+
+  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE) + 
+  geom_vline(xintercept = lfourth, col = "green", lwd = 2)+
+  geom_vline(xintercept = ufourth, col = "green", lwd = 2)
+@
+
+% \begin{figure}[ht!]
+%   \centering
+%   \includegraphics{../images/phnx-1-m2-b1-l1-middle-fifty-demo.png}
+%   \caption{Middle fifty percent of the bullet land marked by two cyan coloured vertical lines imposed over the Phoenix set Gun 1-M2 Bullet 1 Land 1 scan}
+%   \label{fig:middlefifty}
+% \end{figure}
+
+To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in figure ref{fig:middlefifty} where the middle fifty percent of the bullet land is bordered by cyan colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
 
 Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan. Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows:
 
@@ -259,14 +338,14 @@ Once features are chosen to describe both the left and right hand grooves of the
   $\text{Groove Estimate} = \text{Bottom x-intercept in microns} + \text{slope}*y_{i} - \text{adjust}$
 \end{center}
 
- Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in \ref{fig:get-mask-hough-example-one}. 
+ Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in ref{fig:get-mask-hough-example-one}. 
  
-\begin{figure}[ht!]
-  \centering
-  \includegraphics{../images/phoenix-gun-1-l5-b1-l1-groove-estimation-example-1.png}
-  \caption{Hough groove estimate visualized over whole of bullet land for the Phoenix set gun 1-L5 bullet one land one with adjust set to 30.}
-  \label{fig:get-mask-hough-example-one}
-\end{figure}
+% \begin{figure}[ht!]
+%   \centering
+%   \includegraphics{../images/phoenix-gun-1-l5-b1-l1-groove-estimation-example-1.png}
+%   \caption{Hough groove estimate visualized over whole of bullet land for the Phoenix set gun 1-L5 bullet one land one with adjust set to 30.}
+%   \label{fig:get-mask-hough-example-one}
+% \end{figure}
 
 
 \section{Results}

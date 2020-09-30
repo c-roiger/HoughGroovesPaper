@@ -1,0 +1,17 @@
+base
+knitr
+grooveFinder
+x3ptools
+bulletxtrctr
+ggplot2
+tidyr
+usethis
+dplyr
+magrittr
+imager
+sp
+raster
+fixedpoints
+png
+cowplot
+magick
