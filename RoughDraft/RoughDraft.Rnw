@@ -38,7 +38,7 @@ When firearms examiners try to match fired bullets they use a form of visual ins
 
 As three dimensional scanning has improved, new methods of bullet identification have developed that rely on established statistical or machine learning processes to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm which removes unnecessary structure from bullet scans and made a random forest model that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm which removes unnecessary bullet structure is the identification of "shoulder locations" of bullet lands to improve the extraction of bullet signatures. Below in figure \ref{fig:crosscut-motivation} is a two-dimensional visualization of a single crosscut from a bullet land.  SEEING MESSAGES?
 
-<<r setup, warning = F, messages = F, echo= FALSE, cache=FALSE>>=
+<<r setup, warning = F, message = F, echo= FALSE, cache=FALSE>>=
 library(grooveFinder)
 library(x3ptools)
 library(bulletxtrctr)
@@ -47,7 +47,7 @@ library(ggplot2)
 library(raster)
 library(tidyr)
 library(knitr)
-library(fixedpoints)
+library(fixedpoints) # remotes::install_github("dahtah/fixedpoints")
 library(grid)
 library(png)
 library(usethis)
