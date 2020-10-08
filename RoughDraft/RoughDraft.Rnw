@@ -205,7 +205,7 @@ strong <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
 
 strong.raster <- imager:::as.data.frame.cimg(strong)
 ggplot() +
-  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  geom_raster(data = strong.raster, aes(x = x, y = y, fill = value)) +
   scale_fill_manual(values = c("black", "white", "grey"))+
   coord_fixed() +
   guides(fill = FALSE)
@@ -231,12 +231,13 @@ expand.strong <- function(ws){
 hystFP <- fp(expand.strong)
 a <- Sys.time()
 out <- list(strong = strong, weak = weak) %>% hystFP
-b <- Sys.time(); b-a
+b <- Sys.time(); 
+# b-a
 
 hyst.raster <- imager:::as.data.frame.cimg(out$strong)
 
 ggplot() +
-  geom_raster(data = hyst.raster, aes(x = x, y = -y, fill = value)) +
+  geom_raster(data = hyst.raster, aes(x = x, y = y, fill = value)) +
   scale_fill_manual(values = c("black", "white", "grey"))+
   coord_fixed() +
   guides(fill = FALSE)
@@ -252,43 +253,75 @@ $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 
 Where $\rho$ represents the length of the normalized orthogonal vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. In Figure ref{fig: parametrization} we see an example of how Hough transforms parametrize a line. In this figure, the orange line represents an example of a detected Hough line. The teal line connecting the origin to the orthogonal bisector of our detected Hough line represents the vector denoted $\rho$ in our above equation. Similarly the teal arc below represents the angle, $\theta$, which is the difference between the top of the image and the orthogonal bisector. 
 
-<<r hessian-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges with magnitudes in the 99th percentile">>=
+<<r hessian-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan">>=
 
+# create tik-z plot to overlay bullet image
 p <- ggplot() +
-  geom_segment(aes(x =1000, y = 0, xend = 0, yend = 250), lwd= 2, colour = "orange") +
-  geom_segment(aes(x =0, y = 0, xend = 590, yend = 100), lwd= 2, colour = "deepskyblue1") +
-  geom_curve(aes(x = 100, y = 0, xend = 50, yend = 10), lwd = 1, colour = "deepskyblue1", curvature = -0.7) + 
-  geom_segment(aes(x = 580, y=73, xend = 650, yend = 85), lwd = 2, colour = "deepskyblue1") +
-  geom_segment(aes(x = 520, y = 90, xend = 580, yend = 75), lwd = 2, colour = "deepskyblue1") +
-  annotate('text', x = 150, y = 10, 
-           label = "theta",parse = TRUE,size=6, colour = "#000000") +
-  annotate('text', x = 150, y = 60, 
-           label = "rho", parse = TRUE, size=6, colour = "#e6e0ff") +
+  geom_segment(aes(x =0, y = 500, xend = 1750, yend = 0), lwd= 2, colour = "orange") +
+  geom_segment(aes(x =0, y = 0, xend = 750, yend = 280), lwd= 2, colour = "deepskyblue1") +
+  geom_curve(aes(x = 200, y = 0, xend = 80, yend = 30), lwd = 1, colour = "deepskyblue1", curvature = -0.7) +
+  geom_segment(aes(x = 755, y= 205, xend = 870, yend = 245), lwd = 2, colour = "deepskyblue1") +
+  geom_segment(aes(x = 650, y = 235, xend = 763, yend = 205), lwd = 2, colour = "deepskyblue1") +
+  annotate('text', x = 300, y = 45,
+           label = "theta",parse = TRUE,size=8, colour = "#e6e0ff") +
+  annotate('text', x = 330, y = 180,
+           label = "rho", parse = TRUE, size=8, colour = "#e6e0ff") +
   theme_set(cowplot::theme_cowplot()) +
-  scale_y_reverse() +
-  scale_x_continuous(limits = c(0, 1200), position = "top")
+  scale_y_reverse(limits = c(1023, 0)) +
+  scale_x_continuous(limits = c(0, 3518), position = "top")
 
+# create bullet scan image
+x3p_image(x3p_flip_y(x3p), multiply = 2, zoom = 0.35, file = "/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/images/template-bullet-scan.png")
 
 cowplot::ggdraw() +
-  cowplot::draw_image("../images/after-before.png", x = 0.05, y = 0, height = 1.25, width = 1) +
+  cowplot::draw_image("../images/template-bullet-scan.png", x = 0.05, y = 0.14, height = 1.25, width = 1) +
   cowplot::draw_plot(p)
 @
-% 
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/hessian-example.png}
-%   \caption{Example of Hessian Normal Form parametrization overlaid a bullet scan}
-%   \label{fig: parametrization}
-% \end{figure}
+
+<<r hessian-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan">>=
+include_graphics('../images/hessian-example.png')
+
+@
+%>% 
 
 We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$.  We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The top is the x-intercept calculated previously, however to calculate the bottom intersection of the bullet land we utilize some geometric properties. We can draw a perpendicular line from the x-intercept at the top of the land to the bottom of the land creating a right triangle as shown below in ref{fig: calcxbottom}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the x-intercept to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the x-intercept is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{height}$. So the index of the bottom intersection of the bullet land is equivalent to top-intersection - $\delta$. 
 
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/calc-xbottom.png}
-%   \caption{Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA}
-%   \label{fig: calcxbottom}
-% \end{figure}
+<<r calc-xbottom, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA">>=
+
+# create tik-z plot to overlay bullet image
+p <- ggplot() +
+  geom_segment(aes(x =0, y = 500, xend = 1750, yend = 0), lwd= 2, colour = "orange") +
+  geom_segment(aes(x = 1750, y = 0, xend = 1750, yend = 320), lwd = 2, colour = "orange") +
+  geom_segment(aes(x = 1765, y = 320, xend = 660, yend = 320), lwd = 2, colour = "#c934eb") +
+  geom_segment(aes(x = 1600, y = 270, xend = 1600, yend = 315), lwd = 2, colour = "orange") +
+  geom_segment(aes(x = 1590, y = 270, xend = 1750, yend = 270), lwd = 2, colour = "orange") +
+  geom_curve(aes(x = 1750, y = 80, xend = 1700, yend =10), lwd = 1, colour = "orange", curvature = -0.7) +
+  geom_segment(aes(x =0, y = 0, xend = 750, yend = 280), lwd= 2, colour = "deepskyblue1") +
+  geom_curve(aes(x = 200, y = 0, xend = 80, yend = 30), lwd = 1, colour = "deepskyblue1", curvature = -0.7) +
+  geom_segment(aes(x = 755, y= 205, xend = 870, yend = 245), lwd = 2, colour = "deepskyblue1") +
+  geom_segment(aes(x = 650, y = 235, xend = 763, yend = 205), lwd = 2, colour = "deepskyblue1") +
+  annotate('text', x = 300, y = 45,
+           label = "theta",parse = TRUE,size=8, colour = "#e6e0ff") +
+  annotate('text', x = 1600, y = 100,
+           label = "theta",parse = TRUE,size=8, colour = "#000000") +
+  annotate('text', x = 330, y = 180,
+           label = "rho", parse = TRUE, size=8, colour = "#e6e0ff") +
+    annotate('text', x = 1200, y = 350,
+           label = "delta", parse = TRUE, size=8, colour = "#000000") +
+  theme_set(cowplot::theme_cowplot()) +
+  scale_y_reverse(limits = c(1023, 0)) +
+  scale_x_continuous(limits = c(0, 3518), position = "top")
+
+
+cowplot::ggdraw() +
+  cowplot::draw_image("../images/template-bullet-scan.png", x = 0.05, y = 0.14, height = 1.25, width = 1) +
+  cowplot::draw_plot(p)
+@
+
+<<r xbottom-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA">>=
+include_graphics('../images/calc-xbottom.png')
+
+@
 
 The utility for calculating the top and bottom intercept of our bullet land is that it allows us to calculate the slope of each Hough line with respect to the y-direction. 
 \begin{center}
@@ -299,12 +332,29 @@ Traditionally slope with respect to the x-direction is chosen for describing the
 
 As discussed before, the Hough transform outputs a score that corresponds to the number of pixels detected on a line that can give us an indication of the strength of the feature detected. Theoretically, we would expect the strongest lines in our image to be the grooves on either side of the bullet land. So the problem arises of how best to select strong edges. Rather than simply filter scores on some arbitrary threshold, we normalize the Hough scores by the largest possible score that could be achieved for each set of features detected. The reason for this is that longer lines will have a larger Hough score simply by virtue of having a larger number of possible detectable pixels. So if we want to compare the strength of various lines, regardless of line length, we need to normalize each score associated with each line detected.  
 
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/calc-theoretical-max.png}
-%   \caption{Demonstration of calculation of theoretical maximum Hough score using SOH-CAH-TOA}
-%   \label{fig:calcmaxscore}
-% \end{figure}
+<<r calc-theoretical-max, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Demonstration of calculation of theoretical maximum score">>=
+
+# create tik-z plot to overlay bullet image
+p <- ggplot() +
+  geom_segment(aes(x = 500, y = 0, xend = 500, yend = 320), lwd = 2, colour = "orange") +
+  geom_segment(aes(x = 490, y = 0, xend = 1000, yend = 320), lwd = 2, colour = "deepskyblue1") +
+  geom_curve(aes(x = 510, y = 100, xend = 560, yend = 50), lwd = 1, colour = "deepskyblue1", curvature = 0.7) +
+  annotate('text', x = 570, y = 120,
+           label = "theta",parse = TRUE,size=8, colour = "#e6e0ff") +
+  theme_set(cowplot::theme_cowplot()) +
+  scale_y_reverse(limits = c(1023, 0)) +
+  scale_x_continuous(limits = c(0, 3518), position = "top")
+
+
+cowplot::ggdraw() +
+  cowplot::draw_image("../images/template-bullet-scan.png", x = 0.05, y = 0.14, height = 1.25, width = 1) +
+  cowplot::draw_plot(p)
+@
+
+<<r max-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap= "Demonstration of calculation of theoretical maximum score">>=
+include_graphics('../images/calc-theoretical-max.png')
+
+@
 
 
 We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. 
