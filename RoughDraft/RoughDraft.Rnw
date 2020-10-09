@@ -90,7 +90,7 @@ ccdata %>%
 
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
-\newpage
+
 
 <<r signal-motivation-good, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with properly identified groove engraved areas">>=
 
@@ -390,15 +390,40 @@ Once features are chosen to describe both the left and right hand grooves of the
 
  Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in ref{fig:get-mask-hough-example-one}. 
  
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/phoenix-gun-1-l5-b1-l1-groove-estimation-example-1.png}
-%   \caption{Hough groove estimate visualized over whole of bullet land for the Phoenix set gun 1-L5 bullet one land one with adjust set to 30.}
-%   \label{fig:get-mask-hough-example-one}
-% \end{figure}
+ <<r get-mask-hough-example-code, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Hough groove estimate visualized over whole of bullet land with adjust set to 30">>=
+
+# find grooves
+grooves <- get_grooves_hough(x3p, adjust = 120)
+
+# get mask
+mask <- get_mask_hough(x3p, grooves)
+
+# create bullet scan image
+x3p_image(x3p_flip_y(mask), multiply = 2, zoom = 0.35, file = "/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/images/mask-example.png")
+
+
+
+@
+
+<<r get-mask-hough-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Hough groove estimate visualized over whole of bullet land with adjust set to 120">>=
+include_graphics('../images/mask-example.png')
+@
+ 
 
 
 \section{Results}
+
+*** Have a choice here, can compare hough transform results to those of the LASSO and BCP methods and discuss the ways in which the Hough transform fails. Or can discuss the hough transform on its own. I for now will start with comparing the Hough transform to the other methods.***
+
+In order to assess the effectiveness of the Hough Transform method we will use the "Area of Misidentifiaction" score, as described above, to see how far away our prediction is from the manually identified groove location. We will also compare our results to two other methods of groove identification to see how well this new method compares to tools previously developed by CSAFE researchers. In total there will be three methods for comparison:
+
+\begin{enumerate}
+\item Hough Transform
+\item Logistic LASSO
+\item Bayesian changepoint
+\end{enumerate}
+
+Scores were obtained for two different bullet test sets, the Phoenix PD set, and the Hamby 44 set. Due to the sheer size of the individual x3p files in each set, scores were obtained for each file one at a time. An x3p file would be read into local memory and three different groove locations would be calculated for each method identified above. Then a robust LOESS is fit to the x3p file to remove bullet curvature and signatures are extracted. The area of misidentification in microns is calculated for each of the three methods for each groove (left and right) and stored in the form of a dataset. This process is repeated for every file in the test set, where scores are stored and appended into a large dataframe of scores, groove locations, manual identification locations, and bullet identifications. Ideally, well identified grooves should have an area of misidentification close to zero for both the left and right grooves. 
 
 
 
