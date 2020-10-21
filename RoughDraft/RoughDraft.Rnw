@@ -26,11 +26,50 @@
 \author{Charlotte Roiger}
 \title{Hough Transforms for Groove Identification in Land Engraved Areas (LEAs) on Fired Bullets}
 
-\titlepage
 \begin{document}
 \lhead{\today}
 \chead{CSAFE - Hough Grooves Document Process}
 \rhead{Page \thepage\ of \pageref{LastPage}}
+
+\begin{titlepage}
+   \begin{center}
+       \vspace*{1cm}
+
+       \textbf{Hough Transforms for Groove Identification in Land Engraved Areas (LEAs) on Fired Bullets}
+
+            
+       \vspace{1 cm}
+
+       \textbf{Charlotte Roiger}
+
+       \vskip 1in
+            
+       A thesis submitted to the graduate faculty \\
+       in partial fulfillment of the requirements for the degree of\\
+       MASTER OF SCIENCE
+            
+       \vspace{0.8cm}
+       
+       Major: Statistics
+       \vspace{2cm}
+       Program of Study Committee:\\
+       Heike Hofmann, Major Professor \\
+       Jennifer Newman \\
+       Yumou Qiu
+       
+       \vspace{0.8cm}
+       The student author, whose presentation of the scholarship herein was approved by the program
+of study committee, is solely responsible for the content of this thesis. The Graduate College will
+ensure this thesis is globally accessible and will not permit alterations after a degree is conferred.
+     \vspace{3cm}
+            
+       Iowa State University\\
+       Ames, Iowa\\
+       2020\\
+       Copyright \textcopyright Charlotte Roiger, 2020. All Rights Reserved.
+            
+   \end{center}
+\end{titlepage}
 
 \section{Introduction}
 
@@ -413,17 +452,53 @@ include_graphics('../images/mask-example.png')
 
 \section{Results}
 
-*** Have a choice here, can compare hough transform results to those of the LASSO and BCP methods and discuss the ways in which the Hough transform fails. Or can discuss the hough transform on its own. I for now will start with comparing the Hough transform to the other methods.***
-
-In order to assess the effectiveness of the Hough Transform method we will use the "Area of Misidentifiaction" score, as described above, to see how far away our prediction is from the manually identified groove location. We will also compare our results to two other methods of groove identification to see how well this new method compares to tools previously developed by CSAFE researchers. In total there will be three methods for comparison:
+In order to assess the effectiveness of the Hough Transform method we will use the "Area of Misidentifiaction" score, as described above, to see how far away our prediction is from the manually identified groove location. We will also compare our results to one other method of groove identification to see how well this new method compares to tools previously developed by CSAFE researchers. In total there will be two methods for comparison:
 
 \begin{enumerate}
 \item Hough Transform
-\item Logistic LASSO
-\item Bayesian changepoint
+\item Rollapply
 \end{enumerate}
 
 Scores were obtained for two different bullet test sets, the Phoenix PD set, and the Hamby 44 set. Due to the sheer size of the individual x3p files in each set, scores were obtained for each file one at a time. An x3p file would be read into local memory and three different groove locations would be calculated for each method identified above. Then a robust LOESS is fit to the x3p file to remove bullet curvature and signatures are extracted. The area of misidentification in microns is calculated for each of the three methods for each groove (left and right) and stored in the form of a dataset. This process is repeated for every file in the test set, where scores are stored and appended into a large dataframe of scores, groove locations, manual identification locations, and bullet identifications. Ideally, well identified grooves should have an area of misidentification close to zero for both the left and right grooves. 
+
+To improve the accuracy of the Hough transform, we have decide to impute areas of missing information in bullet lands. Missing information in the land is filled in with a value that is 5\% greater than the maximum height value detected in the bullet land.
+
+ <<r five-percent-imputed-code, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Bullet land with imputed missing values">>=
+
+fill_na_with_max <- function(land.x3p){
+  df <- x3p_to_df(land.x3p)
+  min.val <- max(df$value, na.rm = T) * 1.05
+  df$value[is.na(df$value)] <- min.val
+  new.x3p <- df_to_x3p(df)
+  return(new.x3p)
+}
+
+
+# create bullet scan image
+x3p_image(x3p_flip_y(x3p) %>% fill_na_with_max(), multiply = 2, zoom = 0.35, file = "/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/images/fill-na-example.png")
+
+
+
+@
+
+<<r five-percent-imputed, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Bullet Land with missing values imputed">>=
+include_graphics('../images/fill-na-example.png')
+@
+ 
+ 
+Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the left-hand side of bullet lands in the Phoenix PD set.In the below figure Hough estimate scores for area of misidentification are shown in orange and scores for Rollapply are shown in purple. Scores closer to zero indicate a more accurate identification of groove locations. We see a large accumulation of scores for Hough estimates around zero with a majority of the density of Hough AOM scores less than 2000. For the rollapply method, a smaller density of scores are clustered around zero with a larger density of scores closer to 1900. This is an indication that the Hough methods outperforms 
+
+
+<<r phoenix-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of left-hand areas of misidentification Hough estimates are shown in orange and Rollapply are shown in purple">>=
+phoenix.df <- readRDS("../data/phoenix-rollapply-hough-scores-no-adjusts.rds")
+
+phoenix.df %>%
+  ggplot()+
+  geom_density(aes(x = score_left_hough), fill = "orange", alpha = 0.5)+
+  geom_density(aes(x= score_left_rollapply), fill = "purple", alpha = 0.5) +
+  xlab("Area of Misidentification Scores")
+  
+@
 
 
 
