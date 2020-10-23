@@ -486,10 +486,10 @@ include_graphics('../images/fill-na-example.png')
 @
  
  
-Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the left-hand side of bullet lands in the Phoenix PD set.In the below figure Hough estimate scores for area of misidentification are shown in orange and scores for Rollapply are shown in purple. Scores closer to zero indicate a more accurate identification of groove locations. We see a large accumulation of scores for Hough estimates around zero with a majority of the density of Hough AOM scores less than 2000. For the rollapply method, a smaller density of scores are clustered around zero with a larger density of scores closer to 1900. This is an indication that the Hough methods outperforms 
+Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the left-hand side of bullet lands in the Phoenix PD set. In the below figure Hough estimate scores for area of misidentification are shown in orange and scores for Rollapply are shown in purple. Scores closer to zero indicate a more accurate identification of groove locations. We see a large accumulation of scores for Hough estimates around zero with a majority of the density of Hough AOM scores less than 2000. For the rollapply method, a smaller density of scores are clustered around zero with a larger density of scores closer to 1900. This is an indication that the Hough method outperforms the Rollapply method for identifying left hand groove estimates.
 
 
-<<r phoenix-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of left-hand areas of misidentification Hough estimates are shown in orange and Rollapply are shown in purple">>=
+<<r phoenix-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of left-hand areas of misidentification for Phoenix set">>=
 phoenix.df <- readRDS("../data/phoenix-rollapply-hough-scores-no-adjusts.rds")
 
 phoenix.df %>%
@@ -501,6 +501,43 @@ phoenix.df %>%
 @
 
 
+Scores for the right hand groove estimates appear to be much more similar between the Hough and Rollapply estimates, where both area of mis-identifications scores appear to be clustered around zero. An item of note however is that the maximum score for Rollapply estimates is 15,639 and the maximum score for Hough estimates is 5,948. If we filter out scores higher than the maximum Hough score for Rollapply estimates
+
+<<r phoenix-rh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of right-hand areas of misidentification for Phoenix Set">>=
+
+phoenix.df %>%
+  ggplot()+
+  geom_density(aes(x = score_right_hough), fill = "orange", alpha = 0.5)+
+  geom_density(aes(x= score_right_rollapply), fill = "purple", alpha = 0.5) +
+  xlab("Area of Misidentification Scores")
+  
+@
+
+
+When we remove the outlier scores from the Rollapply AOM scores, we see a slightly more clear pattern in scores. It seems as if most scores for both Hough and Rollapply estimates are clustered around zero, but Hough has a higher density of AOM scores below 1000. 
+
+<<r phoenix-rh-score-dist-filtered, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of right-hand areas of misidentification with Rollapply scores filtered for Phoenix Set">>=
+
+ggplot()+
+  geom_density(data = phoenix.df, aes(x = score_right_hough), fill = "orange", alpha = 0.5)+
+  geom_density(data = phoenix.df %>% dplyr::filter(score_right_rollapply < 5948), aes(x= score_right_rollapply), fill = "purple", alpha = 0.5) +
+  xlab("Area of Misidentification Scores")
+  
+@
+
+We see similar results in the Hamby 44 Set for both the left-hand and right-hand groove estimates. In figure [insert figure number ere] 
+
+<<r hamby44-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of left-hand areas of misidentification for Hamby 44 Set">>=
+
+hamby44.df <- readRDS("../data/hamby44-hough-roll-apply-score-no-adjusts.rds")
+
+hamby44.df %>%
+  ggplot()+
+  geom_density(aes(x = score_left_hough), fill = "orange", alpha = 0.5)+
+  geom_density(aes(x= score_left_rollapply), fill = "purple", alpha = 0.5) +
+  xlab("Area of Misidentification Scores")
+  
+@
 
 \bibliography{summat} % Tells it where your list of references is.
 \bibliographystyle{plainnat} 
