@@ -197,10 +197,16 @@ While not explicitly stated in this work, the images in \cite{chu2013} make it c
 
 To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann (citation needed). The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan. A residual is then calculated between the predicted robust LOESS fit of the bullet curvature and the actual data. Then the area between the predicted groove location and the manually identified groove location is examined and the sum of the absolute values of the robust LOESS residual multiplied by the resolution of the scan yields an area in microns. This area is the area of mis-identification and can be used as a score to judge how closely our estimated groove location is to the manually identified groove location. 
 
+\subsection{Data}
+\hh{maybe this section should come even earlier - it helps to know what structure underlies the algorithm and the crosscut}
+
+Data for this project comes from two primary sources, Hamby 44  and Phoenix (MORE INFORMATION NEEDED: \hh{Have a look at this paper: \url{https://www.sciencedirect.com/science/article/pii/S0379073820300293}}). Data is stored in the form of scans called ``x3p"(XML 3-D Surface Profile) and comes from high resolution 3-dimensional microscopy. Each scan consists of height measurements collected over an $x$-$y$ grid, which can be rendered similar to a grey-scale image. To read-in and manipulate the x3p files we utilize the package `x3ptools` to orient or transform the scans as needed for image processing. 
+
+
 
 \subsection{Brief Overview of Hough Transforms}
 
-Data for this project comes from two primary sources, Hamby 44  and Phoenix (MORE INFORMATION NEEDED: \hh{Have a look at this paper: \url{https://www.sciencedirect.com/science/article/pii/S0379073820300293}}). Data is stored in the form of scans called ``x3p"(XML 3-D Surface Profile) and comes from high resolution 3-dimensional microscopy. Each scan consists of height measurements collected over an $x$-$y$ grid, which can be rendered similar to a grey-scale image. To read-in and manipulate the x3p files we utilize the package `x3ptools` to orient or transform the scans as needed for image processing. When we are performing our Hough algorithm, we do not use the actual x3p-file we transform the data into a two-dimensional image. In the two-dimensional representations of bullet images, the y-axis is inverted from the standard x-y plane. A reason for this is that the images are processed in \textbf{C++} which stores images, known as ``CImgs''(Cool Images) in a vector format where the first pixel in the vector corresponds to the upper left-hand pixel of the image located at (0,0). Pixels are then ordered from left to right, extending from the origin to the positive x-direction and from top to bottom, from the x-axis towards the negative y-direction.
+
 
 In broad terms, the Hough Transform is a feature extraction technique for detecting shapes in an image. For any given point in the (x,y)-plane of our image we can calculate a corresponding line in the feature space. Points that lie on the same line will have lines that intersect in the feature space. 
 \begin{figure}[!ht]
@@ -237,7 +243,8 @@ In broad terms, the Hough Transform is a feature extraction technique for detect
 
 The point of intersection in the feature space, then corresponds to the parameters used to describe the edge in the (x,y)-plane that the two detected points lie upon. A two dimensional array called the ``accumulator array" is used to keep track of features detected.  The accumulator array covers the entirety of the feature space separated into a user-specified number of bins. For each set of features detected the bin in the accumulator array associated with that set of features is incremented. So in theory, strong features should have higher values in their associated bin because there is a larger number of pixels detected that all have the same set of features in the feature space. 
 
-
+ When we are performing our Hough algorithm, we do not use the actual x3p-file we transform the data into a two-dimensional image. In the two-dimensional representations of bullet images, the y-axis is inverted from the standard x-y plane. A reason for this is that the images are processed in \textbf{C++} which stores images, known as ``CImgs''(Cool Images) in a vector format where the first pixel in the vector corresponds to the upper left-hand pixel of the image located at (0,0). Pixels are then ordered from left to right, extending from the origin to the positive x-direction and from top to bottom, from the x-axis towards the negative y-direction.
+ 
 \section{Methods}
 
 
