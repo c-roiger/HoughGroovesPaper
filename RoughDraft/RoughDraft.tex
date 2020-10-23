@@ -64,6 +64,10 @@
 
 \hypersetup{colorlinks=true,urlcolor=black}
 
+\usepackage{xcolor}
+
+\newcommand{\hh}[1]{{\color{orange}{#1}}}
+
 \topmargin      -1.5cm   % read Lamport p.163
 \oddsidemargin  -0.04cm  % read Lamport p.163
 \evensidemargin -0.04cm  % same as oddsidemargin but for left-hand pages
@@ -75,19 +79,58 @@
 \pagestyle{fancyplain}
 \author{Charlotte Roiger}
 \title{Hough Transforms for Groove Identification in Land Engraved Areas (LEAs) on Fired Bullets}
-
-\titlepage
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 \lhead{\today}
 \chead{CSAFE - Hough Grooves Document Process}
 \rhead{Page \thepage\ of \pageref{LastPage}}
 
+\begin{titlepage}
+   \begin{center}
+       \vspace*{1cm}
+
+       \textbf{Hough Transforms for Groove Identification in Land Engraved Areas (LEAs) on Fired Bullets}
+
+            
+       \vspace{1 cm}
+
+       \textbf{Charlotte Roiger}
+
+       \vskip 1in
+            
+       A thesis submitted to the graduate faculty \\
+       in partial fulfillment of the requirements for the degree of\\
+       MASTER OF SCIENCE
+            
+       \vspace{0.8cm}
+       
+       Major: Statistics
+       \vspace{2cm}
+       Program of Study Committee:\\
+       Heike Hofmann, Major Professor \\
+       Jennifer Newman \\
+       Yumou Qiu
+       
+       \vspace{0.8cm}
+       The student author, whose presentation of the scholarship herein was approved by the program
+of study committee, is solely responsible for the content of this thesis. The Graduate College will
+ensure this thesis is globally accessible and will not permit alterations after a degree is conferred.
+     \vspace{3cm}
+            
+       Iowa State University\\
+       Ames, Iowa\\
+       2020\\
+       Copyright \textcopyright Charlotte Roiger, 2020. All Rights Reserved.
+            
+   \end{center}
+\end{titlepage}
+
 \section{Introduction}
 
-When firearms examiners try to match fired bullets they use a form of visual inspection to identify whether two bullets were fired from the same gun. As a bullet is being fired, manufacturing defects in the rifling of the gun should leave a unique set of striation. Firearms examiners utilize the striae to make identifications by matching striation patterns between bullets. A 2005 court case known as \textit{United States vs. Green}, established that firearms examiners cannot conclude that a specific bullet was fired from a specific gun ``to the exclusion of every other firearm in the world". That in fact the conclusion of a definitive match stretches beyond the data and methodology available to firearms examiners at the time.  Similarly, in 2009 the National Academy of Sciences published a report that criticized the scientific validity of forensic firearms identification and many other forensic methods. Both of these reports highlight the need for objective quantitative assessments of firearms identification. 
+When firearms and toolmark examiners (FTEs) try to match fired bullets they use a form of visual inspection to determine whether two bullets were fired from the same gun. When a bullet is  fired, manufacturing imperfections in the rifling of the gun  leave marks, thought to be a unique to the barrel. Firearms examiners utilize these marks to make identifications by matching striation patterns between bullets. A 2005 court case known as \textit{United States vs. Green}, established that firearms examiners cannot conclude that a specific bullet was fired from a specific gun ``to the exclusion of every other firearm in the world". That in fact the conclusion of a definitive match stretches beyond the data and methodology available to firearms examiners at the time.  Similarly, in 2009 the National Academy of Sciences published a report that criticized the scientific validity of forensic firearms identification and many other forensic methods. Both of these reports highlight the need for objective quantitative assessments of firearms identification. 
 
-As three dimensional scanning has improved, new methods of bullet identification have developed that rely on established statistical or machine learning processes to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm which removes unnecessary structure from bullet scans and made a random forest model that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm which removes unnecessary bullet structure is the identification of "shoulder locations" of bullet lands to improve the extraction of bullet signatures. Below in figure \ref{fig:crosscut-motivation} is a two-dimensional visualization of a single crosscut from a bullet land.  SEEING MESSAGES?
+As three dimensional scanning techniques have improved, new ways of bullet identification are being developed that rely on  statistical and machine learning methodology to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm  that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm  is the identification of "shoulder locations" of bullet lands to improve the extraction of bullet signatures. \hh{XXX start by showing a rendering of an x3p scan.}
+Figure~\ref{fig:crosscut-motivation} shows a two-dimensional visualization of a single crosscut from a bullet land.  
 
 
 
@@ -95,11 +138,11 @@ As three dimensional scanning has improved, new methods of bullet identification
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
 
-{\centering \includegraphics[width=\maxwidth]{figure/r_crosscut-motivation-1} 
+{\centering \includegraphics[width=\maxwidth]{figure/crosscut-motivation-1} 
 
 }
 
-\caption[Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines]{Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.}\label{fig:r crosscut-motivation}
+\caption[Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines]{Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.}\label{fig:crosscut-motivation}
 \end{figure}
 
 
@@ -107,7 +150,7 @@ As three dimensional scanning has improved, new methods of bullet identification
 
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
-\newpage
+
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
@@ -223,11 +266,7 @@ In order to best identify the GEAs we first want to diminish noise in the image.
 \end{knitrout}
 
 \begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{verbatim}
-## Time difference of 6.613443 mins
-\end{verbatim}
-\end{kframe}\begin{figure}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
 
 {\centering \includegraphics[width=\maxwidth]{figure/r_canny-edge-1} 
 
@@ -249,34 +288,38 @@ $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 
 Where $\rho$ represents the length of the normalized orthogonal vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. In Figure ref{fig: parametrization} we see an example of how Hough transforms parametrize a line. In this figure, the orange line represents an example of a detected Hough line. The teal line connecting the origin to the orthogonal bisector of our detected Hough line represents the vector denoted $\rho$ in our above equation. Similarly the teal arc below represents the angle, $\theta$, which is the difference between the top of the image and the orthogonal bisector. 
 
+
+
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
 
-{\centering \includegraphics[width=\maxwidth]{figure/r_hessian-example-1} 
+{\centering \includegraphics[width=0.5\linewidth]{../images/hessian-example} 
 
 }
 
-\caption[Land Engraved Areas with Edges with magnitudes in the 99th percentile]{Land Engraved Areas with Edges with magnitudes in the 99th percentile}\label{fig:r hessian-example}
+\caption[Example of Hessian Normal Form parametrization overlaid a bullet scan]{Example of Hessian Normal Form parametrization overlaid a bullet scan}\label{fig:r hessian-graphic-inclusion}
 \end{figure}
 
 
 \end{knitrout}
-% 
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/hessian-example.png}
-%   \caption{Example of Hessian Normal Form parametrization overlaid a bullet scan}
-%   \label{fig: parametrization}
-% \end{figure}
+%>% 
 
 We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$.  We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The top is the x-intercept calculated previously, however to calculate the bottom intersection of the bullet land we utilize some geometric properties. We can draw a perpendicular line from the x-intercept at the top of the land to the bottom of the land creating a right triangle as shown below in ref{fig: calcxbottom}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the x-intercept to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the x-intercept is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{height}$. So the index of the bottom intersection of the bullet land is equivalent to top-intersection - $\delta$. 
 
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/calc-xbottom.png}
-%   \caption{Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA}
-%   \label{fig: calcxbottom}
-% \end{figure}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+
+{\centering \includegraphics[width=0.5\linewidth]{../images/calc-xbottom} 
+
+}
+
+\caption[Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA]{Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA}\label{fig:r xbottom-graphic-inclusion}
+\end{figure}
+
+
+\end{knitrout}
 
 The utility for calculating the top and bottom intercept of our bullet land is that it allows us to calculate the slope of each Hough line with respect to the y-direction. 
 \begin{center}
@@ -287,12 +330,20 @@ Traditionally slope with respect to the x-direction is chosen for describing the
 
 As discussed before, the Hough transform outputs a score that corresponds to the number of pixels detected on a line that can give us an indication of the strength of the feature detected. Theoretically, we would expect the strongest lines in our image to be the grooves on either side of the bullet land. So the problem arises of how best to select strong edges. Rather than simply filter scores on some arbitrary threshold, we normalize the Hough scores by the largest possible score that could be achieved for each set of features detected. The reason for this is that longer lines will have a larger Hough score simply by virtue of having a larger number of possible detectable pixels. So if we want to compare the strength of various lines, regardless of line length, we need to normalize each score associated with each line detected.  
 
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/calc-theoretical-max.png}
-%   \caption{Demonstration of calculation of theoretical maximum Hough score using SOH-CAH-TOA}
-%   \label{fig:calcmaxscore}
-% \end{figure}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+
+{\centering \includegraphics[width=0.5\linewidth]{../images/calc-theoretical-max} 
+
+}
+
+\caption[Demonstration of calculation of theoretical maximum score]{Demonstration of calculation of theoretical maximum score}\label{fig:r max-graphic-inclusion}
+\end{figure}
+
+
+\end{knitrout}
 
 
 We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. 
@@ -327,17 +378,108 @@ Once features are chosen to describe both the left and right hand grooves of the
 
  Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in ref{fig:get-mask-hough-example-one}. 
  
-% \begin{figure}[ht!]
-%   \centering
-%   \includegraphics{../images/phoenix-gun-1-l5-b1-l1-groove-estimation-example-1.png}
-%   \caption{Hough groove estimate visualized over whole of bullet land for the Phoenix set gun 1-L5 bullet one land one with adjust set to 30.}
-%   \label{fig:get-mask-hough-example-one}
-% \end{figure}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{../images/mask-example} 
+
+}
+
+\caption[Hough groove estimate visualized over whole of bullet land with adjust set to 120]{Hough groove estimate visualized over whole of bullet land with adjust set to 120}\label{fig:r get-mask-hough-example}
+\end{figure}
+
+
+\end{knitrout}
+ 
 
 
 \section{Results}
 
+In order to assess the effectiveness of the Hough Transform method we will use the "Area of Misidentifiaction" score, as described above, to see how far away our prediction is from the manually identified groove location. We will also compare our results to one other method of groove identification to see how well this new method compares to tools previously developed by CSAFE researchers. In total there will be two methods for comparison:
 
+\begin{enumerate}
+\item Hough Transform
+\item Rollapply
+\end{enumerate}
+
+Scores were obtained for two different bullet test sets, the Phoenix PD set, and the Hamby 44 set. Due to the sheer size of the individual x3p files in each set, scores were obtained for each file one at a time. An x3p file would be read into local memory and three different groove locations would be calculated for each method identified above. Then a robust LOESS is fit to the x3p file to remove bullet curvature and signatures are extracted. The area of misidentification in microns is calculated for each of the three methods for each groove (left and right) and stored in the form of a dataset. This process is repeated for every file in the test set, where scores are stored and appended into a large dataframe of scores, groove locations, manual identification locations, and bullet identifications. Ideally, well identified grooves should have an area of misidentification close to zero for both the left and right grooves. 
+
+To improve the accuracy of the Hough transform, we have decide to impute areas of missing information in bullet lands. Missing information in the land is filled in with a value that is 5\% greater than the maximum height value detected in the bullet land.
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in include\_graphics("{}../images/fill-na-example.png"{}): Cannot find the file(s): "{}../images/fill-na-example.png"{}}}\end{kframe}
+\end{knitrout}
+ 
+ 
+Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the left-hand side of bullet lands in the Phoenix PD set. In the below figure Hough estimate scores for area of misidentification are shown in orange and scores for Rollapply are shown in purple. Scores closer to zero indicate a more accurate identification of groove locations. We see a large accumulation of scores for Hough estimates around zero with a majority of the density of Hough AOM scores less than 2000. For the rollapply method, a smaller density of scores are clustered around zero with a larger density of scores closer to 1900. This is an indication that the Hough method outperforms the Rollapply method for identifying left hand groove estimates.
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/r_phoenix-lh-score-dist-1} 
+
+}
+
+\caption[Distribution of left-hand areas of misidentification for Phoenix set]{Distribution of left-hand areas of misidentification for Phoenix set}\label{fig:r phoenix-lh-score-dist}
+\end{figure}
+
+
+\end{knitrout}
+
+
+Scores for the right hand groove estimates appear to be much more similar between the Hough and Rollapply estimates, where both area of mis-identifications scores appear to be clustered around zero. An item of note however is that the maximum score for Rollapply estimates is 15,639 and the maximum score for Hough estimates is 5,948. If we filter out scores higher than the maximum Hough score for Rollapply estimates
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/r_phoenix-rh-score-dist-1} 
+
+}
+
+\caption[Distribution of right-hand areas of misidentification for Phoenix Set]{Distribution of right-hand areas of misidentification for Phoenix Set}\label{fig:r phoenix-rh-score-dist}
+\end{figure}
+
+
+\end{knitrout}
+
+
+When we remove the outlier scores from the Rollapply AOM scores, we see a slightly more clear pattern in scores. It seems as if most scores for both Hough and Rollapply estimates are clustered around zero, but Hough has a higher density of AOM scores below 1000. 
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/r_phoenix-rh-score-dist-filtered-1} 
+
+}
+
+\caption[Distribution of right-hand areas of misidentification with Rollapply scores filtered for Phoenix Set]{Distribution of right-hand areas of misidentification with Rollapply scores filtered for Phoenix Set}\label{fig:r phoenix-rh-score-dist-filtered}
+\end{figure}
+
+
+\end{knitrout}
+
+We see similar results in the Hamby 44 Set for both the left-hand and right-hand groove estimates. In figure [insert figure number ere] 
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}
+
+{\centering \includegraphics[width=\maxwidth]{figure/r_hamby44-lh-score-dist-1} 
+
+}
+
+\caption[Distribution of left-hand areas of misidentification for Hamby 44 Set]{Distribution of left-hand areas of misidentification for Hamby 44 Set}\label{fig:r hamby44-lh-score-dist}
+\end{figure}
+
+
+\end{knitrout}
 
 \bibliography{summat} % Tells it where your list of references is.
 \bibliographystyle{plainnat} 
