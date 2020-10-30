@@ -100,7 +100,10 @@ opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
 
 <<hare-bullet-anatomy-image, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap="Example of a groove-to-groove scan of a bullet land impression. The red-dotted rectangle on the right shows the location and orientation of the segment">>=
 include_graphics('../images/hare-bullet-anatomy-image.png')
+@
 
+<<microscope-bullet, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap="Bullet in a stage under a confocal light microscope. The green lit area covers the scan of a LEA (land engraved area).">>=
+include_graphics('../images/microscope-bullet.jpg')
 @
 
 <<crosscut-motivation, echo=FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3.2,  fig.cap="Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.">>=
