@@ -1,5 +1,5 @@
 \documentclass[12pt]{article}
-\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx,subcaption, tikz, caption}
+\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx,subcaption, tikz, caption, float}
 \usepackage[authoryear]{natbib} % Natbib options, [numbers] would give numerical citations.
 \bibpunct{(}{)}{;}{a}{,}{,} % Tells it how you want references displaying in the text.
 
@@ -29,6 +29,24 @@
 \pagestyle{fancyplain}
 \author{Charlotte Roiger}
 \title{Hough Transforms for Groove Identification in Land Engraved Areas (LEAs) on Fired Bullets}
+<<setup, warning = F, message = F, echo= FALSE, cache=FALSE>>=
+library(grooveFinder)
+library(x3ptools)
+library(bulletxtrctr)
+library(imager)
+library(ggplot2)
+library(raster)
+library(tidyr)
+library(knitr)
+library(fixedpoints) # remotes::install_github("dahtah/fixedpoints")
+library(grid)
+library(png)
+library(usethis)
+library(cowplot)
+library(magick)
+opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
+opts_chunk$set(fig.pos = 'H')
+@
 
 \begin{document}
 \lhead{\today}
@@ -79,32 +97,21 @@ ensure this thesis is globally accessible and will not permit alterations after 
 
 When firearms and toolmark examiners (FTEs) try to match fired bullets they use a form of visual inspection to determine whether two bullets were fired from the same gun. When a bullet is  fired, manufacturing imperfections in the rifling of the gun  leave marks, thought to be a unique to the barrel. Firearms examiners utilize these marks to make identifications by matching striation patterns between bullets. A 2005 court case known as \textit{United States vs. Green}, established that firearms examiners cannot conclude that a specific bullet was fired from a specific gun ``to the exclusion of every other firearm in the world". That in fact the conclusion of a definitive match stretches beyond the data and methodology available to firearms examiners at the time.  Similarly, in 2009 the National Academy of Sciences published a report that criticized the scientific validity of forensic firearms identification and many other forensic methods. Both of these reports highlight the need for objective quantitative assessments of firearms identification. 
 
-<<setup, warning = F, message = F, echo= FALSE, cache=FALSE>>=
-library(grooveFinder)
-library(x3ptools)
-library(bulletxtrctr)
-library(imager)
-library(ggplot2)
-library(raster)
-library(tidyr)
-library(knitr)
-library(fixedpoints) # remotes::install_github("dahtah/fixedpoints")
-library(grid)
-library(png)
-library(usethis)
-library(cowplot)
-library(magick)
-opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
-@
+As three dimensional scanning techniques have improved, new ways of bullet identification are being developed that rely on  statistical and machine learning methodology to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm  that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm  is the identification of ``shoulder locations" of bullet lands to improve the extraction of bullet signatures. In Figure \ref{fig:hare-bullet-anatomy-image} from \cite{hare2017} we see an example of plotting a bullet land, showing the top and side profiles respectively. The raised portions of the bullet land profile shown in Figure 1a are the shoulder locations in question and are the places where the bullet does not come in contact with the rifling of the gun barrel. 
+
 
 
 <<hare-bullet-anatomy-image, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap="Example of a groove-to-groove scan of a bullet land impression. The red-dotted rectangle on the right shows the location and orientation of the segment">>=
 include_graphics('../images/hare-bullet-anatomy-image.png')
 @
 
+
 <<microscope-bullet, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap="Bullet in a stage under a confocal light microscope. The green lit area covers the scan of a LEA (land engraved area).">>=
 include_graphics('../images/microscope-bullet.jpg')
 @
+
+Figure \ref{fig:microscope-bullet} demonstrates how three dimensional scans are taken using a Confocal light microscope. These scans then result in a three dimensional image as shown in Figure \ref{fig:hare-bullet-anatomy-image}. However, for use in statistical analyses these three-dimensional scans are  turned into a two-dimensional visualization of a single crosscut from a bullet land as shown in Figure \ref{fig:crosscut-motivation}. Figure \ref{fig:crosscut-location-example} shows the location of the crosscut on the three dimensional bullet scan, where crosscuts are chosen using the x3p\_crosscut\_optimize function from the x3ptools package. 
+
 
 <<crosscut-motivation, echo=FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3.2,  fig.cap="Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.">>=
 if (!file.exists("../data/ccdata.rds")) {
@@ -146,9 +153,6 @@ ccdata %>%
 include_graphics('../images/crosscut-location-example.png')
 
 @
-
-As three dimensional scanning techniques have improved, new ways of bullet identification are being developed that rely on  statistical and machine learning methodology to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm  that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm  is the identification of ``shoulder locations" of bullet lands to improve the extraction of bullet signatures. In Figure~\ref{fig:hare-bullet-anatomy-image} from \cite{hare2017} we see an example of plotting a bullet land, showing the top and side profiles respectively. The raised portions of the bullet land profile shown in Figure 1a are the shoulder locations in question and are the places where the bullet does not come in contact with the rifling of the gun barrel.  \hh{XXX start by showing a rendering of an x3p scan.}
-Figure~\ref{fig:crosscut-motivation} shows a two-dimensional visualization of a single crosscut from a bullet land and Figure~\ref{fig:crosscut-location-example} shows the location of the crosscut on the three dimensional bullet scan. 
 
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
@@ -201,6 +205,14 @@ sigs %>%
 
 In figure \ref{fig:sig-comparison} we see a comparison between two signatures one where the grooves are properly identified and one where the grooves are improperly identified. When the right-hand groove is included the residuals are dominated by the bullet groove and the striae are no longer as pronounced. So accurately identifying the bullet grooves is supremely important for bullet identification. We propose a new method for identifying bullet grooves that utilizes an image analysis technique known as the Hough transform to identify prominent features of the bullet land. 
 
+
+\subsection{Data}
+\hh{maybe this section should come even earlier - it helps to know what structure underlies the algorithm and the crosscut}
+
+Data for this project comes from two primary sources, Hamby Set 44 and Phoenix PD set provided by Tylor Klep.  As explained in \cite{Vanderplas2020}, the Hamby Set 44 consists of a total of 35 bullets fired through ten consecutively manufactured Rugers P85s. This set consists of 20 known bullets and fifteen bullets of unknown origin from the ten barrels in this set. Ammunition for this set was 9 mm Lger 115 Grain Full Metal Jacket from the Winchester Ammunition Company. The Phoenix PD set consists of three test fires from each of eight different consecutively rifled Ruger P-95 barrels. In addition, there are ten questioned bullets provided and it is not known whether any of the questioned bullets are fired from the known barrels. Bullets for this set are American Eagle 9 mm Luger full metal jackets and were scanned by Bill Henderson of Sensofar. Data is stored in the form of scans called ``x3p"(XML 3-D Surface Profile) and comes from high resolution 3-dimensional microscopy. Each scan consists of height measurements collected over an $x$-$y$ grid, which can be rendered similar to a grey-scale image. To read-in and manipulate the x3p files we utilize the package `x3ptools` to orient or transform the scans as needed for image processing. 
+
+(MORE INFORMATION NEEDED: \hh{Have a look at this paper: \url{https://www.sciencedirect.com/science/article/pii/S0379073820300293}})
+
 \subsection{Background}
 
 While not specifically targeted at identifying bullet land grooves, image processing techniques have been applied in previous work to enhance and identify usable striae.  \citet{chu2010} create a metric for identifying the quality of 3-dimensional bullet scans using two metrics they called ``striation density" and ``edge density". Researchers define ``edge density" to be the ratio between the number of pixels detected on an edge and the total number of pixels in the area. Next they utilize some form of threshold filter to identify which edges are striae, and define ``striation density" as the ratio between the number of pixels on the identified striations and the total number of pixels in the area. They argue that scans with a higher ``striation density" will be better candidates for examination and identification. 
@@ -212,13 +224,6 @@ While not explicitly stated in this work, the images in \cite{chu2013} make it c
 \hh{XXX I think this is less an issue of error and more an issue of repeatability. The methods are not described in enough detail for us to replicate what was done and the results from these manual steps are not being published anywhere.}
 
 To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann (citation needed). The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan. A residual is then calculated between the predicted robust LOESS fit of the bullet curvature and the actual data. Then the area between the predicted groove location and the manually identified groove location is examined and the sum of the absolute values of the robust LOESS residual multiplied by the resolution of the scan yields an area in microns. This area is the area of mis-identification and can be used as a score to judge how closely our estimated groove location is to the manually identified groove location. 
-
-\subsection{Data}
-\hh{maybe this section should come even earlier - it helps to know what structure underlies the algorithm and the crosscut}
-
-Data for this project comes from two primary sources, Hamby 44  and Phoenix (MORE INFORMATION NEEDED: \hh{Have a look at this paper: \url{https://www.sciencedirect.com/science/article/pii/S0379073820300293}}). Data is stored in the form of scans called ``x3p"(XML 3-D Surface Profile) and comes from high resolution 3-dimensional microscopy. Each scan consists of height measurements collected over an $x$-$y$ grid, which can be rendered similar to a grey-scale image. To read-in and manipulate the x3p files we utilize the package `x3ptools` to orient or transform the scans as needed for image processing. 
-
-
 
 \subsection{Brief Overview of Hough Transforms}
 
