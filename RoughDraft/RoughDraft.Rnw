@@ -110,7 +110,13 @@ include_graphics('../images/hare-bullet-anatomy-image.png')
 include_graphics('../images/microscope-bullet.jpg')
 @
 
-Figure \ref{fig:microscope-bullet} demonstrates how three dimensional scans are taken using a Confocal light microscope. These scans then result in a three dimensional image as shown in Figure \ref{fig:hare-bullet-anatomy-image}. However, for use in statistical analyses these three-dimensional scans are  turned into a two-dimensional visualization of a single crosscut from a bullet land as shown in Figure \ref{fig:crosscut-motivation}. Figure \ref{fig:crosscut-location-example} shows the location of the crosscut on the three dimensional bullet scan, where crosscuts are chosen using the x3p\_crosscut\_optimize function from the x3ptools package. 
+Figure \ref{fig:microscope-bullet} demonstrates how three dimensional scans are taken using a Confocal light microscope. These scans then result in a three dimensional image as shown in Figure \ref{fig:crosscut-location-example}. The Data from these high-resolution scans is stored in the form of scans called ``x3p"(XML 3-D Surface Profile). Each scan consists of height measurements collected over an $x$-$y$ grid, which can be rendered similar to a grey-scale image. To read-in and manipulate the x3p files we utilize the package `x3ptools` to orient or transform the scans as needed for image processing. However, for use in statistical analyses these three-dimensional scans are  turned into a two-dimensional visualization of a single crosscut from a bullet land as shown in Figure \ref{fig:crosscut-motivation}. Figure \ref{fig:crosscut-location-example} shows the location of the crosscut on the three dimensional bullet scan, where crosscuts are chosen using the x3p\_crosscut\_optimize function from the x3ptools package. 
+
+<<crosscut-location-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap="Optimized crosscut location shown as a grey line along bullet profile">>=
+include_graphics('../images/crosscut-location-example.png')
+
+@
+
 
 
 <<crosscut-motivation, echo=FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3.2,  fig.cap="Profile of a land engraved area (LEA), left and right groove locations are marked as vertical lines.">>=
@@ -146,11 +152,6 @@ ccdata %>%
 
 # 
 # ggsave("images/crosscut-motivating-image.png")
-
-@
-
-<<crosscut-location-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap="Optimized crosscut location shown as a grey line along bullet profile">>=
-include_graphics('../images/crosscut-location-example.png')
 
 @
 
@@ -203,15 +204,13 @@ sigs %>%
 %     \label{fig:sig-comparison}
 % \end{figure}
 
-In figure \ref{fig:sig-comparison} we see a comparison between two signatures one where the grooves are properly identified and one where the grooves are improperly identified. When the right-hand groove is included the residuals are dominated by the bullet groove and the striae are no longer as pronounced. So accurately identifying the bullet grooves is supremely important for bullet identification. We propose a new method for identifying bullet grooves that utilizes an image analysis technique known as the Hough transform to identify prominent features of the bullet land. 
+In Figures \ref{fig:signal-motivation-good} and \ref{fig:signal-motivation-bad} we see a comparison between two signatures one where the grooves are properly identified and one where the grooves are improperly identified. When the right-hand groove is included the residuals are dominated by the bullet groove and the striae are no longer as pronounced. So accurately identifying the bullet grooves is supremely important for bullet identification. We propose a new method for identifying bullet grooves that utilizes an image analysis technique known as the Hough transform to identify prominent features of the bullet land. 
 
 
 \subsection{Data}
-\hh{maybe this section should come even earlier - it helps to know what structure underlies the algorithm and the crosscut}
 
-Data for this project comes from two primary sources, Hamby Set 44 and Phoenix PD set provided by Tylor Klep.  As explained in \cite{Vanderplas2020}, the Hamby Set 44 consists of a total of 35 bullets fired through ten consecutively manufactured Rugers P85s. This set consists of 20 known bullets and fifteen bullets of unknown origin from the ten barrels in this set. Ammunition for this set was 9 mm Lger 115 Grain Full Metal Jacket from the Winchester Ammunition Company. The Phoenix PD set consists of three test fires from each of eight different consecutively rifled Ruger P-95 barrels. In addition, there are ten questioned bullets provided and it is not known whether any of the questioned bullets are fired from the known barrels. Bullets for this set are American Eagle 9 mm Luger full metal jackets and were scanned by Bill Henderson of Sensofar. Data is stored in the form of scans called ``x3p"(XML 3-D Surface Profile) and comes from high resolution 3-dimensional microscopy. Each scan consists of height measurements collected over an $x$-$y$ grid, which can be rendered similar to a grey-scale image. To read-in and manipulate the x3p files we utilize the package `x3ptools` to orient or transform the scans as needed for image processing. 
+Data for this project comes from two primary sources, Hamby Set 44 and Phoenix PD set provided by Tylor Klep.  As explained in \cite{Vanderplas2020}, the Hamby Set 44 consists of a total of 35 bullets fired through ten consecutively manufactured Rugers P85s. This set consists of 20 known bullets and fifteen bullets of unknown origin from the ten barrels in this set. Ammunition for this set was 9 mm Lger 115 Grain Full Metal Jacket from the Winchester Ammunition Company. The Phoenix PD set consists of three test fires from each of eight different consecutively rifled Ruger P-95 barrels. In addition, there are ten questioned bullets provided and it is not known whether any of the questioned bullets are fired from the known barrels. Bullets for this set are American Eagle 9 mm Luger full metal jackets and were scanned by Bill Henderson of Sensofar.
 
-(MORE INFORMATION NEEDED: \hh{Have a look at this paper: \url{https://www.sciencedirect.com/science/article/pii/S0379073820300293}})
 
 \subsection{Background}
 
@@ -221,15 +220,14 @@ In a later work  by \citet{chu2013} image processing techniques were taken a ste
 
 While not explicitly stated in this work, the images in \cite{chu2013} make it clear that all of the bullet images upon which the researchers are running their edge detection methods have the Groove Engraved Areas (GEAs) of the bullet scan removed. While no method for groove identification is proposed in the three previous research publications cited, it is reasonable to speculate that such areas were manually identified. If so, this highlights the need for automated and unbiased identification of groove engraved areas since the identification of the LEA in bullet scans on the scale necessary to create some sort of database is time intensive and also introduces another element of human intervention in the bullet identification process. Part of the problem with the existing research presented in this paper is that the methods are not described in enough detail to allow for replication of results from external researchers. In addition, the manual intervention results implicit in \cit{chu2013} are not available for public scrutiny or use. 
 
-\hh{XXX I think this is less an issue of error and more an issue of repeatability. The methods are not described in enough detail for us to replicate what was done and the results from these manual steps are not being published anywhere.}
 
 To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann (citation needed). The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan. A residual is then calculated between the predicted robust LOESS fit of the bullet curvature and the actual data. Then the area between the predicted groove location and the manually identified groove location is examined and the sum of the absolute values of the robust LOESS residual multiplied by the resolution of the scan yields an area in microns. This area is the area of mis-identification and can be used as a score to judge how closely our estimated groove location is to the manually identified groove location. 
+\hh{ Discussion on resulting units and formula for loess needed}
 
 \subsection{Brief Overview of Hough Transforms}
 
 
-
-In broad terms, the Hough Transform is a feature extraction technique for detecting shapes in an image. For any given point in the (x,y)-plane of our image we can calculate a corresponding line in the feature space. Points that lie on the same line will have lines that intersect in the feature space. 
+In broad terms, the Hough Transform is a feature extraction technique for detecting shapes in an image. For any given point in the (x,y)-plane of our image we can calculate a corresponding line in the feature space as shown in Figure~\ref{fig:parameterization}. Points that lie on the same line will have lines that intersect in the feature space. 
 \begin{figure}[!ht]
 \begin{subfigure}{.5\textwidth}
 \centering
@@ -282,6 +280,7 @@ strong <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
 strong.raster <- imager:::as.data.frame.cimg(strong)
 ggplot() +
   geom_raster(data = strong.raster, aes(x = x, y = y, fill = value)) +
+  scale_y_continuous(trans = "reverse") +
   scale_fill_manual(values = c("black", "white", "grey"))+
   coord_fixed() +
   guides(fill = FALSE)
@@ -314,12 +313,13 @@ hyst.raster <- imager:::as.data.frame.cimg(out$strong)
 
 ggplot() +
   geom_raster(data = hyst.raster, aes(x = x, y = y, fill = value)) +
+  scale_y_continuous(trans = "reverse") +
   scale_fill_manual(values = c("black", "white", "grey"))+
   coord_fixed() +
   guides(fill = FALSE)
 @
 
-As shown in Figure \ref{fig:canny} the striae in the LEA are much more pronounced than in the image with only strong edges. We wish to focus on only detecting GEAs, so detecting an increased number of striae through Canny edge detection is not useful for our algorithm. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. While changing the number of bins does not seem to effect the processing time of the Hough transform, having a larger number of bins increases the number of extraneous detected lines in the image. For example in Figure \ref{fig:hough-compare}\subref{fig:hough1} we can see that the Hough transforms with 100 bins does a perfectly adequate job of picking up the suspected grooves of the bullet. Therefore the extra detected lines in \ref{fig:hough-compare}\subref{fig:hough2} are not used in our analysis so we chose to limit our bin number as a result.
+As shown in Figure \ref{fig:canny-edge} the striae in the LEA are much more pronounced than in the image with only strong edges. We wish to focus on only detecting GEAs, so detecting an increased number of striae through Canny edge detection is not useful for our algorithm. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. While changing the number of bins does not seem to effect the processing time of the Hough transform, having a larger number of bins increases the number of extraneous detected lines in the image. For example in Figure \ref{fig:hough-compare}\subref{fig:hough1} we can see that the Hough transforms with 100 bins does a perfectly adequate job of picking up the suspected grooves of the bullet. Therefore the extra detected lines in \ref{fig:hough-compare}\subref{fig:hough2} are not used in our analysis so we chose to limit our bin number as a result.
 
 We make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. It is worth noting that the original output of the `` \texttt{hough\char`_lines}" functions have angles ranging from 0 to $2\pi$. So to make selecting lines from our desired range, easier we chose to transform any angle greater than $\pi$, to instead be from 0 to $-\pi$ by subtracting $2\pi$ from the original theta angle. Therefore we select only the Hough lines that have theta angles from the positive x-axis less than $\frac{\pi}{16}$ and greater than $\frac{-\pi}{16}$. The parametrization produced by `` \texttt{hough\char`_lines}" is of the form:
 
@@ -441,7 +441,8 @@ lfourth <- width(strong)/4
 ufourth <- 3*width(strong)/4
 
 ggplot()+
-  geom_raster(data = strong.raster, aes(x = x, y = -y, fill = value)) +
+  geom_raster(data = strong.raster, aes(x = x, y = y, fill = value)) +
+  scale_y_continuous(trans = "reverse") +
   scale_fill_manual(values = c("black", "white", "grey"))+
   coord_fixed() +
   guides(fill = FALSE) + 
