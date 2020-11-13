@@ -98,9 +98,9 @@ ensure this thesis is globally accessible and will not permit alterations after 
 
 \section{Introduction}
 
-When firearms and toolmark examiners (FTEs) try to match fired bullets they use a form of visual inspection to determine whether two bullets were fired from the same gun. When a bullet is  fired, manufacturing imperfections in the rifling of the gun  leave marks, thought to be a unique to the barrel. Firearms examiners utilize these marks to make identifications by matching striation patterns between bullets. A 2005 court case known as \textit{United States vs. Green}, established that firearms examiners cannot conclude that a specific bullet was fired from a specific gun ``to the exclusion of every other firearm in the world". That in fact the conclusion of a definitive match stretches beyond the data and methodology available to firearms examiners at the time.  Similarly, in 2009 the National Academy of Sciences published a report that criticized the scientific validity of forensic firearms identification and many other forensic methods. Both of these reports highlight the need for objective quantitative assessments of firearms identification. 
+When firearms and toolmark examiners (FTEs) try to match fired bullets they use a form of visual inspection to determine whether two bullets were fired from the same gun. When a bullet is  fired, manufacturing imperfections in the rifling of the barrel of the gun  leave marks, thought to be a unique to a barrel. Firearms examiners utilize these marks to make identifications by matching striation patterns between bullets. A 2005 court case known as \textit{United States vs. Green}, established that firearms examiners cannot conclude that a specific bullet was fired from a specific gun ``to the exclusion of every other firearm in the world". That in fact the conclusion of a definitive match stretches beyond the data and methodology available to firearms examiners at the time.  Similarly, in 2009 the National Academy of Sciences published a report that criticized the scientific validity of forensic firearms identification and many other forensic methods. Both of these reports highlight the need for objective quantitative assessments of firearms identification. 
 
-As three dimensional scanning techniques have improved, new ways of bullet identification are being developed that rely on  statistical and machine learning methodology to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm  that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm  is the identification of ``shoulder locations" of bullet lands to improve the extraction of bullet signatures. In Figure \ref{fig:hare-bullet-anatomy-image} from \cite{hare2017} we see an example of plotting a bullet land, showing the top and side profiles respectively. The raised portions of the bullet land profile shown in Figure 1a are the shoulder locations in question and are the places where the bullet does not come in contact with the rifling of the gun barrel. 
+As three dimensional scanning techniques have improved, new ways of bullet identification are being developed that rely on  statistical and machine learning methodology to automate bullet identification. One such example of automated bullet matching can be found in \cite{hare2017}, where the authors created an algorithm  that provides a probabilistic assessment of the strength of a match between two bullets. A key component of the algorithm  is the identification of ``shoulder locations" of bullet lands to improve the extraction of bullet signatures. In Figure \ref{fig:hare-bullet-anatomy-image} from \cite{hare2017} we see an example of a digital rendering of a bullet land, showing the top and side profiles respectively. The raised portions of the bullet land profile shown in Figure 1a are the shoulder locations in question and are the places where the bullet does not come in contact with the rifling of the gun barrel. 
 
 
 
@@ -161,12 +161,33 @@ ccdata %>%
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
 
+<<signal-motivation, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Good and bad in one Single signature with properly identified groove engraved areas">>=
+sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.05)
+grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2]))
+
+sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.05)
+
+sigs1 %>% 
+  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x/1000)) + 
+  geom_line(aes(y = raw_sig, colour = "well-specified"), alpha = 0.5,) +
+  geom_line(aes(y = raw_sig, colour = "mis-specified"), alpha = 0.5, data = sigs2) +
+  geom_line(aes(y = sig, colour = "well-specified"), size=1) +
+  geom_line(aes(y = sig, colour = "mis-specified"),size=1, data = sigs2) +
+  scale_colour_manual("Left Groove", values = c("orange", "steelblue")) +
+  ylim(c(-5,7.5)) +
+  xlim(c(0, 1)) +
+  theme_bw() +
+  ylab("Relative heigh measurement (in micron)") +
+  xlab("Left half of LEA signature (in millimeters)") +
+  theme(legend.position = "bottom")
+@
 
 <<signal-motivation-good, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with properly identified groove engraved areas">>=
 
-sigs <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.3)
+sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.3)
 
-sigs %>% 
+sigs1 %>% 
   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
   ggplot(aes(x = x)) + 
   geom_line(aes(y = raw_sig), colour = "grey30") +
@@ -180,9 +201,9 @@ sigs %>%
 <<signal-motivation-bad, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with improperly identified groove engraved areas">>=
 grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2] - 50))
 
-sigs <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.3)
+sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.3)
 
-sigs %>% 
+sigs2 %>% 
   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
   ggplot(aes(x = x)) + 
   geom_line(aes(y = raw_sig), colour = "grey30") +
@@ -487,7 +508,7 @@ ggplot()+
 %   \label{fig:middlefifty}
 % \end{figure}
 
-To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in Figure \ref{fig:middle-fifty} where the middle fifty percent of the bullet land is bordered by cyan colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
+To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in Figure \ref{fig:middle-fifty} where the middle fifty percent of the bullet land is bordered by green colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
 
 Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan($r_s$). Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows, where $y_i$ is any y-location on the bullet land:
 
