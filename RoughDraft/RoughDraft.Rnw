@@ -161,7 +161,7 @@ ccdata %>%
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
 
-<<signal-motivation, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Good and bad in one Single signature with properly identified groove engraved areas">>=
+<<signal-motivation, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 4, fig.cap= "Signatures corresponding to the above profile with properly specified and improperly specified locations of the left groove.">>=
 sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.05)
 grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2]))
 
@@ -170,49 +170,51 @@ sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.05)
 sigs1 %>% 
   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
   ggplot(aes(x = x/1000)) + 
-  geom_line(aes(y = raw_sig, colour = "well-specified"), alpha = 0.5,) +
-  geom_line(aes(y = raw_sig, colour = "mis-specified"), alpha = 0.5, data = sigs2) +
-  geom_line(aes(y = sig, colour = "well-specified"), size=1) +
-  geom_line(aes(y = sig, colour = "mis-specified"),size=1, data = sigs2) +
+  geom_line(aes(y = raw_sig, colour = "mis-specified", linetype="raw signature" ), alpha = 0.5, data = sigs2) +
+  geom_line(aes(y = sig, colour = "mis-specified", linetype="smoothed signature"),size=1, data = sigs2) +
+  geom_line(aes(y = raw_sig, colour = "well-specified", linetype="raw signature"), alpha = 0.5,) +
+  geom_line(aes(y = sig, colour = "well-specified", linetype="smoothed signature"), size=1) +
   scale_colour_manual("Left Groove", values = c("orange", "steelblue")) +
+  scale_linetype_manual("Signature", values = c(1,2)) +
   ylim(c(-5,7.5)) +
-  xlim(c(0, 1)) +
+  #xlim(c(0, 1)) +
   theme_bw() +
   ylab("Relative heigh measurement (in micron)") +
-  xlab("Left half of LEA signature (in millimeters)") +
+  xlab("LEA signature (in millimeters)") +
   theme(legend.position = "bottom")
 @
 
-<<signal-motivation-good, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with properly identified groove engraved areas">>=
-
-sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.3)
-
-sigs1 %>% 
-  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
-  ggplot(aes(x = x)) + 
-  geom_line(aes(y = raw_sig), colour = "grey30") +
-  geom_line(aes(y = sig), colour = "grey70") +
-  ylim(c(-5,5)) +
-  theme_bw()
-
-@
-
-
-<<signal-motivation-bad, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with improperly identified groove engraved areas">>=
-grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2] - 50))
-
-sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.3)
-
-sigs2 %>% 
-  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
-  ggplot(aes(x = x)) + 
-  geom_line(aes(y = raw_sig), colour = "grey30") +
-  geom_line(aes(y = sig), colour = "grey70") +
-  ylim(c(-5,5)) +
-  theme_bw()
-
-@
-
+% 
+% <<signal-motivation-good, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with properly identified groove engraved areas">>=
+% 
+% sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.3)
+% 
+% sigs1 %>% 
+%   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+%   ggplot(aes(x = x)) + 
+%   geom_line(aes(y = raw_sig), colour = "grey30") +
+%   geom_line(aes(y = sig), colour = "grey70") +
+%   ylim(c(-5,5)) +
+%   theme_bw()
+% 
+% @
+% 
+% 
+% <<signal-motivation-bad, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with improperly identified groove engraved areas">>=
+% grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2] - 50))
+% 
+% sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.3)
+% 
+% sigs2 %>% 
+%   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+%   ggplot(aes(x = x)) + 
+%   geom_line(aes(y = raw_sig), colour = "grey30") +
+%   geom_line(aes(y = sig), colour = "grey70") +
+%   ylim(c(-5,5)) +
+%   theme_bw()
+% 
+% @
+% 
 
 % \begin{figure}[ht!]
 % \begin{subfigure}{.5\textwidth}

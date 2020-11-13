@@ -202,39 +202,43 @@ The predominant feature of this crosscut is the curvature of the barrel as well 
 
 }
 
-\caption[Good and bad in one Single signature with properly identified groove engraved areas]{Good and bad in one Single signature with properly identified groove engraved areas}\label{fig:signal-motivation}
+\caption[Signatures corresponding to the above profile with properly specified and improperly specified locations of the left groove]{Signatures corresponding to the above profile with properly specified and improperly specified locations of the left groove.}\label{fig:signal-motivation}
 \end{figure}
 
 
 \end{knitrout}
 
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[H]
-
-{\centering \includegraphics[width=\maxwidth]{figure/signal-motivation-good-1} 
-
-}
-
-\caption[Single signature with properly identified groove engraved areas]{Single signature with properly identified groove engraved areas}\label{fig:signal-motivation-good}
-\end{figure}
-
-
-\end{knitrout}
-
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{figure}[H]
-
-{\centering \includegraphics[width=\maxwidth]{figure/signal-motivation-bad-1} 
-
-}
-
-\caption[Single signature with improperly identified groove engraved areas]{Single signature with improperly identified groove engraved areas}\label{fig:signal-motivation-bad}
-\end{figure}
-
-
-\end{knitrout}
-
+% 
+% <<signal-motivation-good, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with properly identified groove engraved areas">>=
+% 
+% sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.3)
+% 
+% sigs1 %>% 
+%   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+%   ggplot(aes(x = x)) + 
+%   geom_line(aes(y = raw_sig), colour = "grey30") +
+%   geom_line(aes(y = sig), colour = "grey70") +
+%   ylim(c(-5,5)) +
+%   theme_bw()
+% 
+% @
+% 
+% 
+% <<signal-motivation-bad, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with improperly identified groove engraved areas">>=
+% grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2] - 50))
+% 
+% sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.3)
+% 
+% sigs2 %>% 
+%   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+%   ggplot(aes(x = x)) + 
+%   geom_line(aes(y = raw_sig), colour = "grey30") +
+%   geom_line(aes(y = sig), colour = "grey70") +
+%   ylim(c(-5,5)) +
+%   theme_bw()
+% 
+% @
+% 
 
 % \begin{figure}[ht!]
 % \begin{subfigure}{.5\textwidth}
