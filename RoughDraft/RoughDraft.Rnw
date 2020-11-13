@@ -44,6 +44,9 @@ library(png)
 library(usethis)
 library(cowplot)
 library(magick)
+library(ggthemes)
+
+
 opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
 opts_chunk$set(fig.pos = 'H')
 @
@@ -221,7 +224,7 @@ In a later work  by \citet{chu2013} image processing techniques were taken a ste
 While not explicitly stated in this work, the images in \cite{chu2013} make it clear that all of the bullet images upon which the researchers are running their edge detection methods have the Groove Engraved Areas (GEAs) of the bullet scan removed. While no method for groove identification is proposed in the three previous research publications cited, it is reasonable to speculate that such areas were manually identified. If so, this highlights the need for automated and unbiased identification of groove engraved areas since the identification of the LEA in bullet scans on the scale necessary to create some sort of database is time intensive and also introduces another element of human intervention in the bullet identification process. Part of the problem with the existing research presented in this paper is that the methods are not described in enough detail to allow for replication of results from external researchers. In addition, the manual intervention results implicit in \cit{chu2013} are not available for public scrutiny or use. 
 
 
-To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann (citation needed). The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan. A residual is then calculated between the predicted robust LOESS fit of the bullet curvature and the actual data. Then the area between the predicted groove location and the manually identified groove location is examined and the sum of the absolute values of the robust LOESS residual multiplied by the resolution of the scan yields an area in microns. This area is the area of mis-identification and can be used as a score to judge how closely our estimated groove location is to the manually identified groove location. 
+To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann (citation needed). The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan using the following process. A residual is then calculated between the predicted robust LOESS fit of the bullet curvature and the actual data. Then the area between the predicted groove location and the manually identified groove location is examined and the sum of the absolute values of the robust LOESS residual multiplied by the resolution of the scan yields an area in microns. This area is the area of mis-identification and can be used as a score to judge how closely our estimated groove location is to the manually identified groove location. 
 \hh{ Discussion on resulting units and formula for loess needed}
 
 \subsection{Brief Overview of Hough Transforms}
@@ -327,7 +330,7 @@ We make the assumption that scans are oriented properly and as such, most Hough 
 $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 \end{center}
 
-Where $\rho$ represents the length of the normalized orthogonal vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. In Figure ref{fig:parametrization} we see an example of how Hough transforms parametrize a line. In this figure, the orange line represents an example of a detected Hough line. The teal line connecting the origin to the orthogonal bisector of our detected Hough line represents the vector denoted $\rho$ in our above equation. Similarly the teal arc below represents the angle, $\theta$, which is the difference between the top of the image and the orthogonal bisector. 
+Where $\rho$ represents the length of the normalized orthogonal vector between the detected line and the origin of the image, and $\theta$ is the angle between the positive x-axis and the normalized vector. In Figure \ref{fig:hessian-graphic-inclusion} we see an example of how Hough transforms parametrize a line. The orange line represents an example of a detected Hough line. The teal line connecting the origin to the orthogonal bisector of our detected Hough line represents the vector denoted $\rho$ in our above equation. Similarly the teal arc below represents the angle, $\theta$, which is the difference between the top of the image and the orthogonal bisector. 
 
 <<hessian-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan">>=
 
@@ -354,17 +357,31 @@ cowplot::ggdraw() +
   cowplot::draw_plot(p)
 @
 
-<<hessian-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan">>=
+<<hessian-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "80%", fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan">>=
 include_graphics('../images/hessian-example.png')
 
 @
-%>% 
 
-We note that when $\theta$ is equal to 0, the x-intercept is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept is equivalent to $\frac{\rho}{\cos(\theta)}$.  We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The top is the x-intercept calculated previously, however to calculate the bottom intersection of the bullet land we utilize some geometric properties. We can draw a perpendicular line from the x-intercept at the top of the land to the bottom of the land creating a right triangle as shown below in ref{fig:calcxbottom}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the x-intercept to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the x-intercept is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{height}$. So the index of the bottom intersection of the bullet land is equivalent to top-intersection - $\delta$. 
+We take a moment here to define a couple of symbols for use in our explanation to follow:
+\begin{itemize}
+  \item $\mathbf{x_{t}}$: The x-intercept at the top of the bullet land \\
+  \item $\mathbf{x_{b}}$: The x-intercept at the bottom of the bullet land \\
+  \item $\boldsymbol\delta$: The difference between $x_t$ and $x_b$ in the x-direction \\
+  \item \textbf{h}: The height of the bullet land \\
+  \item $\mathbf{m_y}$: The slope of the detected Hough line in the y-direction \\
+  \item $\mathbf{m_x}$: The slope of the detected Hough line in the x-direction \\
+\end{itemize}
+We note that when $\theta$ is equal to 0, the $x_t$ is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the 
+\begin{center}
+$x_t$ = $\frac{\rho}{\cos(\theta)}$
+\end{center}
+
+We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The $x_t$ was calculated previously, however to calculate $x_b$ we utilize some geometric properties. We can draw a perpendicular line from the $x_t$ to $x_b$ creating a right triangle as shown below in Figure \ref{fig:xbottom-graphic-inclusion}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the $x_t$ to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the $x_t$ is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{h}$. So then $x_b = x_t - \delta$. 
 
 <<calc-xbottom, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA">>=
 
 # create tik-z plot to overlay bullet image
+
 p <- ggplot() +
   geom_segment(aes(x =0, y = 500, xend = 1750, yend = 0), lwd= 2, colour = "orange") +
   geom_segment(aes(x = 1750, y = 0, xend = 1750, yend = 320), lwd = 2, colour = "orange") +
@@ -376,8 +393,14 @@ p <- ggplot() +
   geom_curve(aes(x = 200, y = 0, xend = 80, yend = 30), lwd = 1, colour = "deepskyblue1", curvature = -0.7) +
   geom_segment(aes(x = 755, y= 205, xend = 870, yend = 245), lwd = 2, colour = "deepskyblue1") +
   geom_segment(aes(x = 650, y = 235, xend = 763, yend = 205), lwd = 2, colour = "deepskyblue1") +
+  geom_point(aes(x = 1750, y = 0), lwd = 4, colour = "black") +
+  geom_point(aes(x = 640, y = 320), lwd = 4, colour = "black") +
   annotate('text', x = 300, y = 45,
            label = "theta",parse = TRUE,size=8, colour = "#e6e0ff") +
+  annotate('text', x = 1850, y = 25,
+           label = "x[t]",parse = TRUE,size=9, colour = "#000000") +
+  annotate('text', x = 460, y = 310,
+           label = "x[b]",parse = TRUE,size=9, colour = "#000000") +
   annotate('text', x = 1600, y = 100,
            label = "theta",parse = TRUE,size=8, colour = "#000000") +
   annotate('text', x = 330, y = 180,
@@ -394,17 +417,17 @@ cowplot::ggdraw() +
   cowplot::draw_plot(p)
 @
 
-<<xbottom-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA">>=
+<<xbottom-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "80%", fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA">>=
 include_graphics('../images/calc-xbottom.png')
 
 @
 
 The utility for calculating the top and bottom intercept of our bullet land is that it allows us to calculate the slope of each Hough line with respect to the y-direction. 
 \begin{center}
-\text{Slope \ with \ respect \ to \ y} = $\frac{(\text{x-intercept of the top} - \text{x-intercept of the bottom})}{\text{height of the bullet land}}$
+ $m_y = \frac{(x_t - x_b)}{\text{h}}$
 \end{center}
 
-Traditionally slope with respect to the x-direction is chosen for describing the equation of a line, however, because we are primarily interested in vertical lines the slope with respect to the x-direction tends to infinity. This is undesirable because our end goal is to be able to identify the location of a bullet groove at a particular location on the y-axis, a crosscut. To identify the x-location of the groove for a given crosscut of our bullet scans, we want to input the y-location of the crosscut to our linear equation estimate of the groove and solve for x. So a slope of infinity makes this process hard to automate when we can eliminate this problem by simply having a slope in the y-direction. 
+Traditionally $m_x$ is chosen for describing the equation of a line, however, because we are primarily interested in vertical lines $m_x$ tends to infinity. This is undesirable because our end goal is to be able to identify the location of a bullet groove at a particular location on the y-axis, a crosscut. To identify the x-location of the groove for a given crosscut of our bullet scans, we want to input the y-location of the crosscut to our linear equation estimate of the groove and solve for x. So a slope of infinity makes this process hard to automate when we can eliminate this problem by simply having a slope in the y-direction. 
 
 As discussed before, the Hough transform outputs a score that corresponds to the number of pixels detected on a line that can give us an indication of the strength of the feature detected. Theoretically, we would expect the strongest lines in our image to be the grooves on either side of the bullet land. So the problem arises of how best to select strong edges. Rather than simply filter scores on some arbitrary threshold, we normalize the Hough scores by the largest possible score that could be achieved for each set of features detected. The reason for this is that longer lines will have a larger Hough score simply by virtue of having a larger number of possible detectable pixels. So if we want to compare the strength of various lines, regardless of line length, we need to normalize each score associated with each line detected.  
 
@@ -427,13 +450,20 @@ cowplot::ggdraw() +
   cowplot::draw_plot(p)
 @
 
-<<max-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap= "Demonstration of calculation of theoretical maximum score">>=
+<<max-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "80%", fig.cap= "Demonstration of calculation of theoretical maximum score">>=
 include_graphics('../images/calc-theoretical-max.png')
 
 @
 
 
-We calculate the largest possible theoretical score by dividing the height of the image by $\cos(\theta)$. This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in figure ref{fig:calcmaxscore}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features by the theoretical maximum score, yielding the normalized score. 
+We calculate the largest possible theoretical score($\psi_{max}$) using the following.
+\begin{center}
+  $\psi_{max} = \frac{h}{\cos(\theta)}$
+\end{center}
+This should in theory give us the total possible pixels that the Hough transform could have detected in our image by exploiting geometric properties of the right triangle shown in Figure~\ref{fig:max-graphic-inclusion}. Then for each unique set of features that describe a line that the Hough transform detects we divide the score associated with these features($\psi$) by the theoretical maximum score, yielding the normalized score($\psi_{norm}$).
+\begin{center}
+ $\psi_{norm} = \frac{\psi}{\psi_{max}}$
+\end{center}
 
 <<middle-fifty, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges with magnitudes in the 99th percentile">>=
 
@@ -457,15 +487,15 @@ ggplot()+
 %   \label{fig:middlefifty}
 % \end{figure}
 
-To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in figure ref{fig:middlefifty} where the middle fifty percent of the bullet land is bordered by cyan colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
+To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in Figure \ref{fig:middle-fifty} where the middle fifty percent of the bullet land is bordered by cyan colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
 
-Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan. Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows:
+Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan($r_s$). Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows, where $y_i$ is any y-location on the bullet land:
 
 \begin{center}
-  $\text{Groove Estimate} = \text{Bottom x-intercept in microns} + \text{slope}*y_{i} - \text{adjust}$
+  $\text{Groove Estimate} = (x_b -1)*r_s + m_y*y_{i} - \text{adjust}$
 \end{center}
 
- Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in ref{fig:get-mask-hough-example-one}. 
+ Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in Figure \ref{fig:get-mask-hough-example}. 
  
  <<get-mask-hough-example-code, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Hough groove estimate visualized over whole of bullet land with adjust set to 30">>=
 
@@ -524,44 +554,32 @@ include_graphics('../images/fill-na-example.png')
 @
  
  
-Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the left-hand side of bullet lands in the Phoenix PD set. In the below figure Hough estimate scores for area of misidentification are shown in orange and scores for Rollapply are shown in purple. Scores closer to zero indicate a more accurate identification of groove locations. We see a large accumulation of scores for Hough estimates around zero with a majority of the density of Hough AOM scores less than 2000. For the rollapply method, a smaller density of scores are clustered around zero with a larger density of scores closer to 1900. This is an indication that the Hough method outperforms the Rollapply method for identifying left hand groove estimates.
+Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the Phoenix PD set. In the below figure Hough estimate scores for area of misidentification are shown in orange and scores for Rollapply are shown in blue. Smaller logged scores indicate a more accurate identification of groove locations. For both the right and left-hand grooves for this set we see that the Hough method has a smaller spread in logged AOM scores than the rollapply method. For the left hand groove, the Hough method appears to have a lower median logged AOM score than the rollapply method however for the right hand side, the median logged AOM scores is slightly higher. 
 
+<<phoenix-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Boxplots of AOM scores for the Phoenix PD set separated by groove side and method">>=
 
-<<phoenix-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of left-hand areas of misidentification for Phoenix set">>=
+#load in saved results data
 phoenix.df <- readRDS("../data/phoenix-rollapply-hough-scores-no-adjusts.rds")
 
-phoenix.df %>%
-  ggplot()+
-  geom_density(aes(x = score_left_hough), fill = "orange", alpha = 0.5)+
-  geom_density(aes(x= score_left_rollapply), fill = "purple", alpha = 0.5) +
-  xlab("Area of Misidentification Scores")
-  
-@
+# adjust scores to longer format so all scores are in one variable as opposed to four
+phoenix.df <- phoenix.df %>%
+  tidyr::pivot_longer(cols = c(score_left_hough, score_left_rollapply, score_right_hough, score_right_rollapply), names_to = "score_type", values_to = "score")
 
-
-Scores for the right hand groove estimates appear to be much more similar between the Hough and Rollapply estimates, where both area of mis-identifications scores appear to be clustered around zero. An item of note however is that the maximum score for Rollapply estimates is 15,639 and the maximum score for Hough estimates is 5,948. If we filter out scores higher than the maximum Hough score for Rollapply estimates
-
-<<phoenix-rh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of right-hand areas of misidentification for Phoenix Set">>=
+# separate scores by method and chirality
+phoenix.df <- phoenix.df %>%
+  dplyr::mutate(method = ifelse(score_type %in% c("score_left_hough","score_right_hough"), "hough","rollapply" ),
+                groove_chirality = ifelse(score_type %in% c("score_left_hough","score_left_rollapply"), "left", "right"))
 
 phoenix.df %>%
   ggplot()+
-  geom_density(aes(x = score_right_hough), fill = "orange", alpha = 0.5)+
-  geom_density(aes(x= score_right_rollapply), fill = "purple", alpha = 0.5) +
-  xlab("Area of Misidentification Scores")
+  geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  coord_flip() +
+  facet_grid(~groove_chirality) 
   
 @
 
 
-When we remove the outlier scores from the Rollapply AOM scores, we see a slightly more clear pattern in scores. It seems as if most scores for both Hough and Rollapply estimates are clustered around zero, but Hough has a higher density of AOM scores below 1000. 
-
-<<phoenix-rh-score-dist-filtered, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of right-hand areas of misidentification with Rollapply scores filtered for Phoenix Set">>=
-
-ggplot()+
-  geom_density(data = phoenix.df, aes(x = score_right_hough), fill = "orange", alpha = 0.5)+
-  geom_density(data = phoenix.df %>% dplyr::filter(score_right_rollapply < 5948), aes(x= score_right_rollapply), fill = "purple", alpha = 0.5) +
-  xlab("Area of Misidentification Scores")
-  
-@
 
 We see similar results in the Hamby 44 Set for both the left-hand and right-hand groove estimates. In figure [insert figure number ere] 
 
@@ -569,11 +587,22 @@ We see similar results in the Hamby 44 Set for both the left-hand and right-hand
 
 hamby44.df <- readRDS("../data/hamby44-hough-roll-apply-score-no-adjusts.rds")
 
+# adjust scores to longer format so all scores are in one variable as opposed to four
+hamby44.df <- hamby44.df %>%
+  tidyr::pivot_longer(cols = c(score_left_hough, score_left_rollapply, score_right_hough, score_right_rollapply), names_to = "score_type", values_to = "score")
+
+# separate scores by method and chirality
+hamby44.df <- hamby44.df %>%
+  dplyr::mutate(method = ifelse(score_type %in% c("score_left_hough","score_right_hough"), "hough","rollapply" ),
+                groove_chirality = ifelse(score_type %in% c("score_left_hough","score_left_rollapply"), "left", "right"))
+
 hamby44.df %>%
   ggplot()+
-  geom_density(aes(x = score_left_hough), fill = "orange", alpha = 0.5)+
-  geom_density(aes(x= score_left_rollapply), fill = "purple", alpha = 0.5) +
-  xlab("Area of Misidentification Scores")
+  geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  coord_flip() +
+  facet_grid(~groove_chirality) 
+
   
 @
 
