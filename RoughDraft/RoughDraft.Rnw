@@ -593,9 +593,36 @@ include_graphics('../images/fill-na-example.png')
 @
  
  
-Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the Phoenix PD set. In the below figure Hough estimate scores for area of misidentification are shown in orange and scores for Rollapply are shown in blue. Smaller logged scores indicate a more accurate identification of groove locations. For both the right and left-hand grooves for this set we see that the Hough method has a smaller spread in logged AOM scores than the rollapply method. For the left hand groove, the Hough method appears to have a lower median logged AOM score than the rollapply method however for the right hand side, the median logged AOM scores is slightly higher. 
+Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the Phoenix PD set in Figure \ref{fig: phoenix-score-dist-density}. For the left groove we can see that the Hough method has a much larger accumulation of well-specified grooves than that of the rollapply since most Hough scores are clustered at lower values. For the right-hand groove, both methods appear to have a large number of scores clustered at lower values. However, for both left and right groove locations the Hough method has a lower spread of AOM scores than that of the rollapply method.  
 
-<<phoenix-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Boxplots of AOM scores for the Phoenix PD set separated by groove side and method">>=
+<<phoenix-score-dist-density, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Density Plots of AOM scores for the Phoenix PD set separated by groove side and method">>=
+
+#load in saved results data
+phoenix.df <- readRDS("../data/phoenix-rollapply-hough-scores-no-adjusts.rds")
+
+# adjust scores to longer format so all scores are in one variable as opposed to four
+phoenix.df <- phoenix.df %>%
+  tidyr::pivot_longer(cols = c(score_left_hough, score_left_rollapply, score_right_hough, score_right_rollapply), names_to = "score_type", values_to = "score")
+
+# separate scores by method and chirality
+phoenix.df <- phoenix.df %>%
+  dplyr::mutate(method = ifelse(score_type %in% c("score_left_hough","score_right_hough"), "hough","rollapply" ),
+                groove_chirality = ifelse(score_type %in% c("score_left_hough","score_left_rollapply"), "left", "right"))
+
+phoenix.df %>%
+  dplyr::filter(score < 15000) %>%
+  ggplot()+
+  geom_density(aes(x = score, fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  facet_wrap(~groove_chirality, nrow = 2) 
+  
+@
+
+
+
+This conclusion is further emphasize in Figure \ref{fig: phoenix-score-dist-bp}Hough where we have log transformed AOM scores shown as boxplots. Smaller logged scores indicate a more accurate identification of groove locations. For both the right and left-hand grooves for this set we see that the Hough method has a smaller spread in logged AOM scores than the rollapply method. For the left hand groove, the Hough method appears to have a lower median logged AOM score than the rollapply method however for the right hand side, the median logged AOM scores is slightly higher. 
+
+<<phoenix-score-dist-bp, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Boxplots of AOM scores for the Phoenix PD set separated by groove side and method">>=
 
 #load in saved results data
 phoenix.df <- readRDS("../data/phoenix-rollapply-hough-scores-no-adjusts.rds")
