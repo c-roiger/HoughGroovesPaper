@@ -161,6 +161,7 @@ ccdata %>%
 
 The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
 
+
 <<signal-motivation, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 4, fig.cap= "Signatures corresponding to the above profile with properly specified and improperly specified locations of the left groove.">>=
 sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.05)
 grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2]))
@@ -184,53 +185,6 @@ sigs1 %>%
   theme(legend.position = "bottom")
 @
 
-% 
-% <<signal-motivation-good, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with properly identified groove engraved areas">>=
-% 
-% sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.3)
-% 
-% sigs1 %>% 
-%   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
-%   ggplot(aes(x = x)) + 
-%   geom_line(aes(y = raw_sig), colour = "grey30") +
-%   geom_line(aes(y = sig), colour = "grey70") +
-%   ylim(c(-5,5)) +
-%   theme_bw()
-% 
-% @
-% 
-% 
-% <<signal-motivation-bad, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Single signature with improperly identified groove engraved areas">>=
-% grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2] - 50))
-% 
-% sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.3)
-% 
-% sigs2 %>% 
-%   dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
-%   ggplot(aes(x = x)) + 
-%   geom_line(aes(y = raw_sig), colour = "grey30") +
-%   geom_line(aes(y = sig), colour = "grey70") +
-%   ylim(c(-5,5)) +
-%   theme_bw()
-% 
-% @
-% 
-
-% \begin{figure}[ht!]
-% \begin{subfigure}{.5\textwidth}
-%   \centering
-%   \includegraphics{../images/signal-motivating-example-good-grooves.png}
-%   \caption{A signature extracted from the Hamby 44 set barrel 7, bullet 1, land 3 with properly removed grooves}
-% \end{subfigure}
-% \begin{subfigure}{.5\textwidth}
-%   \centering
-%   \includegraphics{../images/signal-motivating-example-bad-grooves.png}
-%   \caption{A signature extracted from the Hamby 44 set barrel 7, bullet 1, land 3 with improperly removed grooves}
-% \end{subfigure}
-%     \label{fig:sig-comparison}
-% \end{figure}
-
-In Figures \ref{fig:signal-motivation-good} and \ref{fig:signal-motivation-bad} we see a comparison between two signatures one where the grooves are properly identified and one where the grooves are improperly identified. When the right-hand groove is included the residuals are dominated by the bullet groove and the striae are no longer as pronounced. So accurately identifying the bullet grooves is supremely important for bullet identification. We propose a new method for identifying bullet grooves that utilizes an image analysis technique known as the Hough transform to identify prominent features of the bullet land. 
 
 
 \subsection{Data}
@@ -247,8 +201,69 @@ In a later work  by \citet{chu2013} image processing techniques were taken a ste
 While not explicitly stated in this work, the images in \cite{chu2013} make it clear that all of the bullet images upon which the researchers are running their edge detection methods have the Groove Engraved Areas (GEAs) of the bullet scan removed. While no method for groove identification is proposed in the three previous research publications cited, it is reasonable to speculate that such areas were manually identified. If so, this highlights the need for automated and unbiased identification of groove engraved areas since the identification of the LEA in bullet scans on the scale necessary to create some sort of database is time intensive and also introduces another element of human intervention in the bullet identification process. Part of the problem with the existing research presented in this paper is that the methods are not described in enough detail to allow for replication of results from external researchers. In addition, the manual intervention results implicit in \cit{chu2013} are not available for public scrutiny or use. 
 
 
-To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann (citation needed). The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan using the following process. A residual is then calculated between the predicted robust LOESS fit of the bullet curvature and the actual data. Then the area between the predicted groove location and the manually identified groove location is examined and the sum of the absolute values of the robust LOESS residual multiplied by the resolution of the scan yields an area in microns. This area is the area of mis-identification and can be used as a score to judge how closely our estimated groove location is to the manually identified groove location. 
-\hh{ Discussion on resulting units and formula for loess needed}
+To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann \cite{rice-2019}. The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan. This LOESS model predicts height values, $\hat{z_i}$as a function of location $x_i$ on the bullet land by estimating values $\beta_0, \beta_1$ that minimizes the following equation:
+\begin{center}
+  $\text{arg} \ \underset{\beta}{\min} \overset{n}{\underset{k=1}{\sum}} w_k(x_i) (z_k-(\beta_0 + \beta_1 x_k))^2$
+\end{center}
+
+where $w_k(x_i)$ is a weight associated with each data point $x_k$ based on its distance from $x_i$. The researchers then create a robustness weight, $\delta_k$ which is based on the magnitude of each residual, $e_k = z_k - \hat{z_k}$. The process of fitting the robust LOESS model is as follows: 
+\begin{enumerate}
+  \item Fit a LOESS model to a LEA profile, predicting height $z_i$ using relative location $x_i$. Assign robustness weights $\delta_k$ of 1 to each data point $(x_k, y_k)$. 
+  \item Obtain predicted height values $\hat{z_k}$ and corresponding residual values $e_k = z_k - \hat{z_k}$.
+  \item Calculate updated robustness weights using residual values $e_k$:
+  \begin{center}
+    $\delta_k \times w_k(x_i) = \left( 1 - \left( \dfrac{e_k}{6 * MAD} \right)^2 \right)^2$ if $\left| \dfrac{e_k}{6*MAD}\right| < 1$ 
+  \end{center}
+  where MAD is the median absolute deviation of residuals $e_k$.
+  \item Repeat steps 1-3 with updated weights at each iteration for $m$ iterations, with 20 set as a default.
+  \item After $m = 20$ iterations, fit a LOESS model and obtain residual values $e_i$ for each data point $(x_i, z_i)$
+\end{enumerate}
+
+Once these residuals are obtained, the area between the predicted groove location and the manually identified groove location is calculated. More formally, we define the following:
+\begin{itemize}
+  \item $\mathbf{x_{\gamma}}$: the predicted groove x-location
+  \item $\mathbf{x_m}$: the manually identified groove x-location
+  \item $\mathbf{e_i}$: The robust LOESS residual value for each data point
+  \item $\mathbf{r_s}$: The resolution of the x3p scan
+  \item $\mathbf{j_{min}}$: x-location index of $\min(x_{\gamma}, x_m)$ 
+  \item $\mathbf{j_{max}}$: x-location index of $\max(x_{\gamma}, x_m)$ 
+\end{itemize}
+
+Thus the AOM score can be calculated using 
+\begin{center}
+  $\overset{j_{max}}{\underset{i = j_{min}}{\sum}}|e_i|*r_s$
+\end{center}
+
+
+<<AOM-motivation, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 4, fig.cap= "Area of misidentification between well-specified and mis-specified signatures shown in purple.">>=
+sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.05)
+grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2]))
+
+sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.05)
+
+sigs.combined <- data.frame(sigs1, bad.sig =sigs2$sig)
+
+
+sigs1 %>% 
+  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x/1000)) + 
+  geom_line(aes(y = raw_sig, colour = "mis-specified", linetype="raw signature" ), alpha = 0.5, data = sigs2) +
+  geom_line(aes(y = sig, colour = "mis-specified", linetype="smoothed signature"),size=1, data = sigs2) +
+  geom_line(aes(y = raw_sig, colour = "well-specified", linetype="raw signature"), alpha = 0.5,) +
+  geom_line(aes(y = sig, colour = "well-specified", linetype="smoothed signature"), size=1) +
+  geom_ribbon(data=subset(sigs.combined, 0 <= x/1000 & x/1000 <= 0.5), aes(ymin= bad.sig, ymax = sig), fill="mediumorchid2", alpha=0.5) +
+  scale_colour_manual("Left Groove", values = c("orange", "steelblue")) +
+  scale_linetype_manual("Signature", values = c(1,2)) +
+  ylim(c(-5,7.5)) +
+  #xlim(c(0, 1)) +
+  theme_bw() +
+  ylab("Relative heigh measurement (in micron)") +
+  xlab("LEA signature (in millimeters)") +
+  theme(legend.position = "bottom")
+@
+
+
+ This can best be described as the integral between two bullet signatures, one where the signature is based on the manually identified groove location and another signature based on our groove estimate, thus yielding an area in $\text{microns}^2$, as shown in Figure~\ref{fig:AOM-motivation}. This AOM score and can be used as a score to judge how closely our estimated groove location is to the manually identified groove location. 
 
 \subsection{Brief Overview of Hough Transforms}
 
@@ -512,10 +527,11 @@ ggplot()+
 
 To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in Figure \ref{fig:middle-fifty} where the middle fifty percent of the bullet land is bordered by green colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
 
-Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan($r_s$). Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows, where $y_i$ is any y-location on the bullet land:
+Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines, where the left-hand and right-hand groove are denoted $\gamma_{lh}, \gamma_{rh}$, respectively. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan($r_s$). In addition, we can also introduce manually identified adjusts into our groove equations. Each test set tends to have an optimal adjust value that provides a more accurate groove identification by shifting the automatically identified grooves into the interior of the bullet land by the number of microns specified by the adjust on both the left and right-hand sides of the bullet land. Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows, where $y_i$ is any y-location on the bullet land and $\alpha$ is the groove adjust:
 
 \begin{center}
-  $\text{Groove Estimate} = (x_b -1)*r_s + m_y*y_{i} - \text{adjust}$
+  $\gamma_{lh} = (x_b -1)*r_s + m_y*y_{i} + \alpha$ \\
+  $\gamma_{rh} = (x_b -1)*r_s + m_y*y_{i} - \alpha$
 \end{center}
 
  Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in Figure \ref{fig:get-mask-hough-example}. 
