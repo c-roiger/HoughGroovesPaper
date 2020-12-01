@@ -159,10 +159,10 @@ ccdata %>%
 @
 
 
-The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential. 
+The predominant feature of this crosscut is the curvature of the barrel as well as two deep trenches next to two peaks which represent the beginning of the shoulders of the bullet land. To extract a signature from this data, the curvature of the bullet structure must be removed, leaving behind clear indications of striae. To accomplish this task, \cite{hare2017} fit a loess regression to the data. The residuals of this regression are then considered to be the signature of the particular bullet land in question. Due to the high variability in height of the bullet grooves or shoulder area of the bullet land, inclusion of these regions would significantly decrease the quality of the loess regression estimate of the bullet curvature since these regions are highly influential, as demonstrated in Figure \ref{fig:signal-motivation}. 
 
 
-<<signal-motivation, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 4, fig.cap= "Signatures corresponding to the above profile with properly specified and improperly specified locations of the left groove.">>=
+<<signal-motivation, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Signatures corresponding to the above profile with properly specified and improperly specified locations of the left groove.">>=
 sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.05)
 grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2]))
 
@@ -198,7 +198,7 @@ While not specifically targeted at identifying bullet land grooves, image proces
 
 In a later work  by \citet{chu2013} image processing techniques were taken a step further. Rather than using edge detection to establish a quality metric, edge detection was used to identify the location of valid striation marks. Once the location of striae were known, a mask that covered and expanded the edge points of valid striae was utilized to identify areas of bullet scans that would be suitable for use in a CCF (cross correlation function) analysis. CCF has previously been studied \cite{chu2010-ccf} and found to be a useful method for bullet identification. So the ability to identify where CCF can be applied is a step forward on the path to automated identification of bullet lands. However, these methods identified in \cite{chu2013} are not available in algorithmic form to researchers outside of the National Institute of Standards and Technology(NIST), making it difficult to verify results.  
 
-While not explicitly stated in this work, the images in \cite{chu2013} make it clear that all of the bullet images upon which the researchers are running their edge detection methods have the Groove Engraved Areas (GEAs) of the bullet scan removed. While no method for groove identification is proposed in the three previous research publications cited, it is reasonable to speculate that such areas were manually identified. If so, this highlights the need for automated and unbiased identification of groove engraved areas since the identification of the LEA in bullet scans on the scale necessary to create some sort of database is time intensive and also introduces another element of human intervention in the bullet identification process. Part of the problem with the existing research presented in this paper is that the methods are not described in enough detail to allow for replication of results from external researchers. In addition, the manual intervention results implicit in \cit{chu2013} are not available for public scrutiny or use. 
+While not explicitly stated in this work, the images in \cite{chu2013} make it clear that all of the bullet images upon which the researchers are running their edge detection methods have the Groove Engraved Areas (GEAs) of the bullet scan removed. While no method for groove identification is proposed in the three previous research publications cited, it is reasonable to speculate that such areas were manually identified. If so, this highlights the need for automated and unbiased identification of groove engraved areas since the identification of the LEA in bullet scans on the scale necessary to create some sort of database is time intensive and also introduces another element of human intervention in the bullet identification process. Part of the problem with the existing research presented in this paper is that the methods are not described in enough detail to allow for replication of results from external researchers. In addition, the manual intervention results implicit in \cite{chu2013} are not available for public scrutiny or use. 
 
 
 To evaluate the accuracy of our groove identification we will use a metric devised by Kiegan Rice, Nate Garton, and Heike Hofmann \cite{rice-2019}. The idea behind this metric is that a robust LOESS is fit to model the curvature of the bullet scan. This LOESS model predicts height values, $\hat{z_i}$as a function of location $x_i$ on the bullet land by estimating values $\beta_0, \beta_1$ that minimizes the following equation:
@@ -268,7 +268,9 @@ sigs1 %>%
 \subsection{Brief Overview of Hough Transforms}
 
 
-In broad terms, the Hough Transform is a feature extraction technique for detecting shapes in an image. For any given point in the (x,y)-plane of our image we can calculate a corresponding line in the feature space as shown in Figure~\ref{fig:parameterization}. Points that lie on the same line will have lines that intersect in the feature space. 
+In broad terms, the Hough Transform is a feature extraction technique for detecting shapes in an image. For any given point in the (x,y)-plane of our image we can calculate a corresponding line in the feature space as shown in Figure~\ref{fig:parametrization}. Points that lie on the same line will have lines that intersect in the feature space. The point of intersection in the feature space, then corresponds to the parameters used to describe the edge in the (x,y)-plane that the two detected points lie upon. A two dimensional array called the ``accumulator array" is used to keep track of features detected.  The accumulator array covers the entirety of the feature space separated into a user-specified number of bins. For each set of features detected the bin in the accumulator array associated with that set of features is incremented. So in theory, strong features should have higher values in their associated bin because there is a larger number of pixels detected that all have the same set of features in the feature space. 
+
+
 \begin{figure}[!ht]
 \begin{subfigure}{.5\textwidth}
 \centering
@@ -300,15 +302,12 @@ In broad terms, the Hough Transform is a feature extraction technique for detect
 \label{fig:parametrization}
 \end{figure}
 
-
-The point of intersection in the feature space, then corresponds to the parameters used to describe the edge in the (x,y)-plane that the two detected points lie upon. A two dimensional array called the ``accumulator array" is used to keep track of features detected.  The accumulator array covers the entirety of the feature space separated into a user-specified number of bins. For each set of features detected the bin in the accumulator array associated with that set of features is incremented. So in theory, strong features should have higher values in their associated bin because there is a larger number of pixels detected that all have the same set of features in the feature space. 
-
- When we are performing our Hough algorithm, we do not use the actual x3p-file we transform the data into a two-dimensional image. In the two-dimensional representations of bullet images, the y-axis is inverted from the standard x-y plane. A reason for this is that the images are processed in \textbf{C++} which stores images, known as ``CImgs''(Cool Images) in a vector format where the first pixel in the vector corresponds to the upper left-hand pixel of the image located at (0,0). Pixels are then ordered from left to right, extending from the origin to the positive x-direction and from top to bottom, from the x-axis towards the negative y-direction.
+ When we are performing our Hough algorithm, we do not use the actual x3p-file, we transform the data into a two-dimensional image. In the two-dimensional representations of bullet scans, the y-axis is inverted from the standard x-y plane. A reason for this is that the images are processed in \textbf{C++} which stores images, known as ``CImgs''(Cool Images) in a vector format where the first pixel in the vector corresponds to the upper left-hand pixel of the image located at (0,0). Pixels are then ordered from left to right, extending from the origin to the positive x-direction and from top to bottom, from the x-axis towards the negative y-direction.
  
 \section{Methods}
 
 
-In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach unfortunately loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be ``strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the Canny Edge algorithm increases processing time by about 35 seconds per image and actually highlights more striae and break-off. 
+In order to best identify the GEAs we first want to diminish noise in the image. This can be achieved by converting each scan into an image gradient, which signifies where there are directional changes in the color of the image. This approach, unfortunately, loses most of the detail of the three dimensional scans, however, it better highlights the differences between LEAs and GEAs. Once an image gradient is obtained we select only edges we consider to be ``strong", meaning they have a magnitude above the 99th percentile. Our reason for not fully carrying out a Canny Edge detection algorithm before using a Hough transform is that the Canny Edge algorithm increases processing time by about 35 seconds per image and actually highlights more striae and break-off. 
 
 <<strong-edge, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges with magnitudes in the 99th percentile">>=
 
@@ -362,7 +361,7 @@ ggplot() +
 
 As shown in Figure \ref{fig:canny-edge} the striae in the LEA are much more pronounced than in the image with only strong edges. We wish to focus on only detecting GEAs, so detecting an increased number of striae through Canny edge detection is not useful for our algorithm. Once we obtain the image gradient with only the strong edges we can then utilize our Hough transformation to obtain generally reasonable estimates of image boundaries. For the Hough transformation we utilize the function `` \texttt{hough\char`_lines}" from the imager package with the number of bins set to 100. While changing the number of bins does not seem to effect the processing time of the Hough transform, having a larger number of bins increases the number of extraneous detected lines in the image. 
 
-We make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. It is worth noting that the original output of the `` \texttt{hough\char`_lines}" functions have angles ranging from 0 to $2\pi$. So to make selecting lines from our desired range, easier we chose to transform any angle greater than $\pi$, to instead be from 0 to $-\pi$ by subtracting $2\pi$ from the original theta angle. Therefore we select only the Hough lines that have theta angles from the positive x-axis less than $\frac{\pi}{16}$ and greater than $\frac{-\pi}{16}$. The parametrization produced by `` \texttt{hough\char`_lines}" is of the form:
+We make the assumption that scans are oriented properly and as such, most Hough lines that correlate to the GEAs will be roughly vertical with some deviations in angle based on scanning technique. It is worth noting that the original output of the `` \texttt{hough\char`_lines}" functions have angles ranging from 0 to $2\pi$. So to make selecting lines from our desired range easier we chose to transform any angle greater than $\pi$, to instead be within the interval 0 to $-\pi$ by subtracting $2\pi$ from the original theta angle. Resulting in all functions having angles in the interval $-\pi$ to $\pi$. Therefore we select only the Hough lines that have theta angles from the positive x-axis less than $\frac{\pi}{16}$ and greater than $\frac{-\pi}{16}$. The parametrization produced by `` \texttt{hough\char`_lines}" is of the form:
 
 \begin{center}
 $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
@@ -409,12 +408,12 @@ We take a moment here to define a couple of symbols for use in our explanation t
   \item $\mathbf{m_y}$: The slope of the detected Hough line in the y-direction \\
   \item $\mathbf{m_x}$: The slope of the detected Hough line in the x-direction \\
 \end{itemize}
-We note that when $\theta$ is equal to 0, the $x_t$ is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the 
+We note that when $\theta$ is equal to 0, the $x_t$ is given by $\rho$ however when $\theta$ is not 0 we utilize the above equation to find that the x-intercept at the top of the bullet land can be given by:
 \begin{center}
 $x_t$ = $\frac{\rho}{\cos(\theta)}$
 \end{center}
 
-We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The $x_t$ was calculated previously, however to calculate $x_b$ we utilize some geometric properties. We can draw a perpendicular line from the $x_t$ to $x_b$ creating a right triangle as shown below in Figure \ref{fig:xbottom-graphic-inclusion}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the $x_t$ to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the $x_t$ is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{h}$. So then $x_b = x_t - \delta$. 
+We utilize this calculation to find where the estimated Hough line intersects the top and bottom of the bullet land. The $x_t$ was calculated previously, however to calculate $x_b$ we utilize some geometric properties. We can draw a perpendicular line from the $x_t$ to the bottom of the land and another line connecting $x_t$ to $x_b$ creating a right triangle as shown below in Figure \ref{fig:xbottom-graphic-inclusion}. Since both the angle between the orthogonal bisector labeled $\rho$ and the new triangle created from the $x_t$ to the bottom of the land are both right triangles, we know that the angle at the top of the newly formed triangle is equivalent to $\theta$. Since the $x_t$ is known, we can use an elementary geometry technique to calculate the distance labeled $\delta$ in the diagram below. Since $\tan(\theta)$ is equivalent to the proportion of the length of the ``opposite" side over the ``adjacent" side of the right triangle, we know that $\delta = \tan(\theta)*\text{h}$. So then $x_b = x_t - \delta$. 
 
 <<calc-xbottom, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA">>=
 
@@ -527,14 +526,14 @@ ggplot()+
 
 To further specify the best candidates for the bullet land grooves, we rely on the heuristic that most of the middle 50\% of the bullet will be occupied by striae. Therefore, we can eliminate any strong lines detected within this region. An example of the middle fifty percent of a bullet land can be seen in Figure \ref{fig:middle-fifty} where the middle fifty percent of the bullet land is bordered by green colored vertical lines. We note that the grooves are well away from this middle fifty percent region, making this a suitable heuristic. We then select the highest normalized score of the lines detected outside of the middle fifty percent of the bullet land. We claim then that this is our detected bullet groove. If on the off chance that the strongest feature detected is within the middle 50\% area of the bullet land, then the grooves are set to be the borders of the middle 50\% area. 
 
-Once features are chosen to describe both the left and right hand grooves of the bullet land the `get\_grooves\_hough` function translates these features into two equations for lines, where the left-hand and right-hand groove are denoted $\gamma_{lh}, \gamma_{rh}$, respectively. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the `get\_grooves\_hough` function by the helper function `pix\_to\_micron` which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan($r_s$). In addition, we can also introduce manually identified adjusts into our groove equations. Each test set tends to have an optimal adjust value that provides a more accurate groove identification by shifting the automatically identified grooves into the interior of the bullet land by the number of microns specified by the adjust on both the left and right-hand sides of the bullet land. Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows, where $y_i$ is any y-location on the bullet land and $\alpha$ is the groove adjust:
+Once features are chosen to describe both the left and right hand grooves of the bullet land the \textbf{get\_grooves\_hough} function translates these features into two equations for lines, where the left-hand and right-hand groove are denoted $\gamma_{lh}, \gamma_{rh}$, respectively. It is worthwhile to note at this point that our calculations have been in terms of pixels detected in an image rather than the microns of the bullet scan. So we must transform our equations of lines from being in terms of pixels to microns. This is accomplished inside the \textbf{get\_grooves\_hough} function by the helper function \textbf{pix\_to\_micron} which subtracts one from the pixel location (since pixels start indexed at one and microns start indexed at zero), then multiplies that pixel location by the resolution of the x3p-scan($r_s$). In addition, we can also introduce manually identified adjusts into our groove equations. Each test set tends to have an optimal adjust value that provides a more accurate groove identification by shifting the automatically identified grooves into the interior of the bullet land by the number of microns specified by the adjust on both the left and right-hand sides of the bullet land. Because we are interested in the slope with respect to the y-direction we calculate our linear equations as follows, where $y_i$ is any y-location on the bullet land and $\alpha$ is the groove adjust:
 
 \begin{center}
   $\gamma_{lh} = (x_b -1)*r_s + m_y*y_{i} + \alpha$ \\
   $\gamma_{rh} = (x_b -1)*r_s + m_y*y_{i} - \alpha$
 \end{center}
 
- Unlike other methods available in the `GrooveFinder` package, the `get\_grooves\_hough` function does not provide a groove estimate at an optimized crosscut. The output of the  `get\_grooves\_hough` function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the `x3p\_optimize\_crosscut` function from the `bulletxtrctr` package. However to visualize our groove estimates across the entire bullet land we have created a helper function called `get\_mask\_hough` that creates a colored mask over our bullet land of our groove estimates as shown in Figure \ref{fig:get-mask-hough-example}. 
+ Unlike other methods available in the \textit{GrooveFinder} package, the \textbf{get\_grooves\_hough} function does not provide a groove estimate at an optimized crosscut. The output of the  \textbf{get\_grooves\_hough} function are a set of two functions that correspond to the left and right-hand grooves. So to produce an actual estimate of our groove location we need to input a y-location into our two functions. For a single point-estimate we can input the y-location of a single crosscut using the \textbf{x3p\_optimize\_crosscut} function from the \textit{bulletxtrctr} package. However to visualize our groove estimates across the entire bullet land we have created a helper function called \textbf{get\_mask\_hough} that creates a colored mask over our bullet land of our groove estimates as shown in Figure \ref{fig:get-mask-hough-example}. 
  
  <<get-mask-hough-example-code, echo = FALSE, fig.align="center", message=FALSE, warning = F, eval = F, fig.height = 3, fig.cap= "Hough groove estimate visualized over whole of bullet land with adjust set to 30">>=
 
@@ -593,7 +592,10 @@ include_graphics('../images/fill-na-example.png')
 @
  
  
-Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the Phoenix PD set in Figure \ref{fig: phoenix-score-dist-density}. For the left groove we can see that the Hough method has a much larger accumulation of well-specified grooves than that of the rollapply since most Hough scores are clustered at lower values. For the right-hand groove, both methods appear to have a large number of scores clustered at lower values. However, for both left and right groove locations the Hough method has a lower spread of AOM scores than that of the rollapply method.  
+Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the Phoenix PD set in Figure \ref{fig: phoenix-score-dist-density}. For the left groove we can see that the Hough method has a much larger accumulation of well-specified grooves than that of the Rollapply since most Hough scores are clustered at lower values. For the right-hand groove, both methods appear to have a large number of scores clustered at lower values. However, for both left and right groove locations the Hough method has a lower spread of AOM scores than that of the Rollapply method.
+
+
+This conclusion is further emphasize in Figure \ref{fig: phoenix-score-dist-bp}Hough where we have log transformed AOM scores shown as boxplots. Smaller logged scores indicate a more accurate identification of groove locations. For both the right and left-hand grooves for this set we see that the Hough method has a smaller spread in logged AOM scores than the Rollapply method. For the left hand groove, the Hough method appears to have a lower median logged AOM score than the Rollapply method however for the right hand side, the median logged AOM scores is slightly higher. 
 
 <<phoenix-score-dist-density, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Density Plots of AOM scores for the Phoenix PD set separated by groove side and method">>=
 
@@ -619,22 +621,7 @@ phoenix.df %>%
 @
 
 
-
-This conclusion is further emphasize in Figure \ref{fig: phoenix-score-dist-bp}Hough where we have log transformed AOM scores shown as boxplots. Smaller logged scores indicate a more accurate identification of groove locations. For both the right and left-hand grooves for this set we see that the Hough method has a smaller spread in logged AOM scores than the rollapply method. For the left hand groove, the Hough method appears to have a lower median logged AOM score than the rollapply method however for the right hand side, the median logged AOM scores is slightly higher. 
-
 <<phoenix-score-dist-bp, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Boxplots of AOM scores for the Phoenix PD set separated by groove side and method">>=
-
-#load in saved results data
-phoenix.df <- readRDS("../data/phoenix-rollapply-hough-scores-no-adjusts.rds")
-
-# adjust scores to longer format so all scores are in one variable as opposed to four
-phoenix.df <- phoenix.df %>%
-  tidyr::pivot_longer(cols = c(score_left_hough, score_left_rollapply, score_right_hough, score_right_rollapply), names_to = "score_type", values_to = "score")
-
-# separate scores by method and chirality
-phoenix.df <- phoenix.df %>%
-  dplyr::mutate(method = ifelse(score_type %in% c("score_left_hough","score_right_hough"), "hough","rollapply" ),
-                groove_chirality = ifelse(score_type %in% c("score_left_hough","score_left_rollapply"), "left", "right"))
 
 phoenix.df %>%
   ggplot()+
@@ -644,13 +631,14 @@ phoenix.df %>%
   facet_grid(~groove_chirality) 
   
 @
+\newpage
 
 
+We see similar results in the Hamby Set 44 for both the left-hand and right-hand groove estimates. In Figure~\ref{fig:hamby44-score-dist-density} we see the density distribution of AOM scores for the Hamby Set 44. For the left hand side, there appears to be a large spread of AOM scores for both the Rollapply and Hough method, however the Hough method has a slightly higher concentration of AOM scores at lower values than the Rollapply method. A similar story can be seen for the right hand groove where both method appear to have a large number of scores clustered near zero, but the Hough method has a larger density of scores at lower values.  
 
-We see similar results in the Hamby 44 Set for both the left-hand and right-hand groove estimates. In figure [insert figure number ere] 
+<<hamby44-score-dist-density, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Density Plots of AOM scores for the Hamby Set 44 separated by groove side and method">>=
 
-<<hamby44-lh-score-dist, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=3, fig.cap = "Distribution of left-hand areas of misidentification for Hamby 44 Set">>=
-
+#load in saved results data
 hamby44.df <- readRDS("../data/hamby44-hough-roll-apply-score-no-adjusts.rds")
 
 # adjust scores to longer format so all scores are in one variable as opposed to four
@@ -663,6 +651,21 @@ hamby44.df <- hamby44.df %>%
                 groove_chirality = ifelse(score_type %in% c("score_left_hough","score_left_rollapply"), "left", "right"))
 
 hamby44.df %>%
+  dplyr::filter(score < 15000) %>%
+  ggplot()+
+  geom_density(aes(x = score, fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  facet_wrap(~groove_chirality, nrow = 2) 
+  
+@
+
+When the logged AOM scores are displayed as box plots we can easily see that for the left groove the Hough method 
+has a smaller spread of logged AOM scores and also has a lower median logged AOM score than that of the Rollapply method. For the right groove it appears that both methods have a similar median, however the distribution of the Hough method is somewhat lower than the Rollapply method. 
+
+
+<<hamby44-score-dist-bp, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Distribution of left-hand areas of misidentification for Hamby 44 Set">>=
+
+hamby44.df %>%
   ggplot()+
   geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
   scale_fill_manual(values = c("orange", "deepskyblue1")) +
@@ -671,6 +674,12 @@ hamby44.df %>%
 
   
 @
+
+\section{Conclusion}
+
+Overall, the Hough method appears to offer a slight improvement in groove location identification than the Rollapply method presented by \cite{hare2017}. Interestingly enough, the effectiveness of the Hough method varies with the side of the groove being identified. As demonstrated in both the Phoenix PD Set and the Hamby Set 44, it seems as if the identifications for both the Hough and Rollapply method are more accurate on the right hand side of the bullet land. It is worth noting however, that the method we use to evaluate the accuracy of groove identifications (AOM scores) contains a slight bias towards the Rollapply method. The reason for this is that the manual groove identifications were made as adjustments to existing Rollapply groove estimates. So reasonably accurate Rollapply estimates of groove locations were accepted without adjustment as a proper identification while less accurate Rollapply estimates were adjusted accordingly. Regardless, the appeal of the Hough method lies in its relative simplicity as an application of a simple computer vision algorithm and its ability to draw information from the entirety of a bullet scan. Further examination of the precision of some of the heuristics used to define this process would be good candidates for further examination. 
+
+\newpage
 
 \bibliography{summat} % Tells it where your list of references is.
 \bibliographystyle{plainnat} 
