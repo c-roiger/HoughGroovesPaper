@@ -1,0 +1,252 @@
+---
+title: "Hough Transforms for Groove Identification in Land Engraved Areas (LEAs) on Fired Bullets"
+subtitle: "Creative Component Oral Exam"
+author: "Charlotte Roiger"
+institute: "Iowa State University"
+date: "12/03/20"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+bibliography: references.bib 
+---
+<style>
+
+.center2 {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+</style>
+```{r, load_refs, include=FALSE, cache=FALSE}
+RefManageR::BibOptions(check.entries = FALSE,
+           bib.style = "authoryear",
+           cite.style = "alphabetic",
+           style = "markdown",
+           max.names = 2,
+           no.print.fields = c("urldate","file","issn","url","keywords","language","abstract"),
+           hyperlink = FALSE,
+           dashed = FALSE)
+myBib <- RefManageR::ReadBib("references.bib", check = FALSE)
+```
+
+```{r, load-libraries, include=FALSE, cache=FALSE, message=FALSE, warning=FALSE}
+library(grooveFinder)
+library(x3ptools)
+library(bulletxtrctr)
+library(imager)
+library(ggplot2)
+library(raster)
+library(tidyr)
+library(knitr)
+library(fixedpoints) # remotes::install_github("dahtah/fixedpoints")
+library(grid)
+library(png)
+library(usethis)
+library(cowplot)
+library(magick)
+
+```
+
+
+#Overview
+
+ - Motivation
+ 
+ - Background Information
+ 
+ - Pre-processing procedures
+ 
+ - Hough Transform Procedure
+
+ - Results & Discussion
+ 
+---
+class: inverse, center, middle
+#Motivation
+---
+
+# Anatomy of a Bullet Land
+
+-  During the firing process unique defects or markings present in the barrel of a gun will be imprinted on the land engraved areas (LEAs)
+
+-  These striations have long been used to make identifications
+
+-  The raised shoulders in these images represent the beginnings of groove engraved areas(GEAs)
+
+
+```{r, echo=FALSE,eval=TRUE, fig.align='center', out.height=300,out.width=400}
+knitr::include_graphics(path = "../images/hare-bullet-anatomy-image.png")
+```
+
+---
+
+# Crosscut Example
+
+- Current methods of groove identification reduce this problem to two-dimensions by taking a crosscut
+
+- This can come from the selection of an optimized y-location on a bullet land or as an average across a small horizontal section of a bullet land
+
+```{r, echo=FALSE,eval=TRUE, fig.align = "bottom", out.height=300,out.width=400}
+knitr::include_graphics(path = "../images/microscope-bullet.jpg")
+```
+
+---
+# Crosscut Example
+
+```{r, crosscut-motivation, echo=FALSE, fig.align = "center", message=FALSE, warning = F, out.height=500,out.width=600, dpi = 300}
+if (!file.exists("../data/ccdata.rds")) {
+x3p <- read_x3p("../data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
+# HH: this x3p file is flipped along the y axis. The crosscut will not extract a good signature
+x3p <- x3p %>% x3p_flip_y() # now it's better
+# image it with 
+
+crosscut <- x3p %>% x3p_crosscut_optimize()  
+
+x3p %>% x3p_add_hline(yintercept=crosscut+10, size=20) %>% x3p_image(multiply = 2, zoom = 0.35, file = "/Users/charlotteroiger/Documents/GitHub/HoughGroovesPaper/images/crosscut-location-example.png")
+ccdata <- x3p_crosscut(x3p)
+cimg <- as.cimg(x3p$surface.matrix)
+saveRDS(cimg, "../data/cimg.rds")
+saveRDS(ccdata, "../data/ccdata.rds")
+} else {
+  ccdata <- readRDS("../data/ccdata.rds")
+  cimg <- readRDS("../data/cimg.rds")
+}
+grooves <- cc_locate_grooves(ccdata, method = "rollapply", adjust = 30)
+
+ccdata %>%
+  ggplot(aes(x = x/1000, y = value)) + 
+  geom_vline(xintercept = grooves$groove[1]/1000, colour = "darkblue") +
+  geom_vline(xintercept = grooves$groove[2]/1000, colour="darkblue") +
+  geom_line() +
+  theme_bw() +
+  ylab("Relative height measurements (in micron)") +
+  xlab("Relative width measurements (in mm)")
+
+```
+
+---
+ 
+---
+class: inverse, center, middle
+#Background
+
+---
+# Previous Applications of Edge Detection
+
+
+---
+# Evaluation of Groove Identification
+
+
+---
+# Introduction to the Hough transform
+
+- The Hough transform is a low-level feature extraction algorithm that can detect user-specified shapes in an image
+
+
+- Points that lie on a line in an image can be translated to intersecting lines in the feature space
+
+
+- 
+
+
+```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=200, out.width=300}
+knitr::include_graphics(path = "../images/feature-space.png")
+```
+
+
+
+---
+
+---
+class: inverse, center, middle
+#Results
+
+---
+# Phoenix PD Set
+
+```{r phnx-density, eval = TRUE, echo = FALSE, fig.align= 'center', warning = FALSE, fig.height= 4, dpi = 300}
+
+#load in saved results data
+phoenix.df <- readRDS("../data/phoenix-rollapply-hough-scores-no-adjusts.rds")
+
+# adjust scores to longer format so all scores are in one variable as opposed to four
+phoenix.df <- phoenix.df %>%
+  tidyr::pivot_longer(cols = c(score_left_hough, score_left_rollapply, score_right_hough, score_right_rollapply), names_to = "score_type", values_to = "score")
+
+# separate scores by method and chirality
+phoenix.df <- phoenix.df %>%
+  dplyr::mutate(method = ifelse(score_type %in% c("score_left_hough","score_right_hough"), "hough","rollapply" ),
+                groove_chirality = ifelse(score_type %in% c("score_left_hough","score_left_rollapply"), "left", "right"))
+
+phoenix.df %>%
+  dplyr::filter(score < 15000) %>%
+  ggplot()+
+  geom_density(aes(x = score, fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  facet_wrap(~groove_chirality, nrow = 2) 
+  
+```
+
+---
+
+```{r phnx-bw, eval = TRUE, echo = FALSE, fig.align= 'center', warning = FALSE, fig.height= 4, dpi = 300}
+phoenix.df %>%
+  ggplot()+
+  geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  coord_flip() +
+  facet_grid(~groove_chirality) 
+```
+
+---
+# Hamby Set 44
+
+```{r hamby-density, eval = TRUE, echo = FALSE, fig.align= 'center', warning = FALSE, fig.height= 4, dpi = 300}
+#load in saved results data
+hamby44.df <- readRDS("../data/hamby44-hough-roll-apply-score-no-adjusts.rds")
+
+# adjust scores to longer format so all scores are in one variable as opposed to four
+hamby44.df <- hamby44.df %>%
+  tidyr::pivot_longer(cols = c(score_left_hough, score_left_rollapply, score_right_hough, score_right_rollapply), names_to = "score_type", values_to = "score")
+
+# separate scores by method and chirality
+hamby44.df <- hamby44.df %>%
+  dplyr::mutate(method = ifelse(score_type %in% c("score_left_hough","score_right_hough"), "hough","rollapply" ),
+                groove_chirality = ifelse(score_type %in% c("score_left_hough","score_left_rollapply"), "left", "right"))
+
+hamby44.df %>%
+  dplyr::filter(score < 15000) %>%
+  ggplot()+
+  geom_density(aes(x = score, fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  facet_wrap(~groove_chirality, nrow = 2) 
+  
+```
+
+---
+```{r hamby-bp, eval = TRUE, echo = FALSE, warning = FALSE, fig.align= 'center', fig.height= 4, dpi = 300}
+hamby44.df %>%
+  ggplot()+
+  geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
+  scale_fill_manual(values = c("orange", "deepskyblue1")) +
+  coord_flip() +
+  facet_grid(~groove_chirality) 
+
+```
+
+
+---
+# References
+```{r refs1, echo=FALSE, results="asis"}
+RefManageR::PrintBibliography(myBib)
+```
+
