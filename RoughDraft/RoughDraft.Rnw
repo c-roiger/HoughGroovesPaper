@@ -44,7 +44,6 @@ library(png)
 library(usethis)
 library(cowplot)
 library(magick)
-library(ggthemes)
 
 
 opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
