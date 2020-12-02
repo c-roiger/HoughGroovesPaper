@@ -62,15 +62,23 @@ library(magick)
  
  - Background Information
  
- - Pre-processing procedures
- 
- - Hough Transform Procedure
+ - Methods
 
  - Results & Discussion
  
 ---
 class: inverse, center, middle
 #Motivation
+---
+.center2[In 2009, the National Academy of Sciences published a report (National Research Council, 2009) questioning the scientific validity of many forensic methods including firearm examination.
+]
+
+---
+.center2[
+```{r, echo=FALSE,eval=TRUE, fig.align='middle', out.height=300,out.width=400, fig.cap="Bullet in a stage under a confocal light microscope. The green lit area covers the scan of a LEA (land engraved area)."}
+knitr::include_graphics(path = "../images/microscope-bullet.jpg")
+```
+]
 ---
 
 # Anatomy of a Bullet Land
@@ -82,10 +90,13 @@ class: inverse, center, middle
 -  The raised shoulders in these images represent the beginnings of groove engraved areas(GEAs)
 
 
-```{r, echo=FALSE,eval=TRUE, fig.align='center', out.height=300,out.width=400}
+```{r, echo=FALSE,eval=TRUE, fig.align='center', out.height=250,out.width=350}
 knitr::include_graphics(path = "../images/hare-bullet-anatomy-image.png")
 ```
 
+.footnote[
+[1] `r RefManageR::Citet(myBib,1)`
+]
 ---
 
 # Crosscut Example
@@ -94,14 +105,15 @@ knitr::include_graphics(path = "../images/hare-bullet-anatomy-image.png")
 
 - This can come from the selection of an optimized y-location on a bullet land or as an average across a small horizontal section of a bullet land
 
-```{r, echo=FALSE,eval=TRUE, fig.align = "bottom", out.height=300,out.width=400}
-knitr::include_graphics(path = "../images/microscope-bullet.jpg")
+```{r cc-location, echo = FALSE, fig.align="center", out.width = 700, out.height = 300, dpi = 400}
+knitr::include_graphics(path = "../images/crosscut-location-example.png")
 ```
 
 ---
-# Crosscut Example
 
-```{r, crosscut-motivation, echo=FALSE, fig.align = "center", message=FALSE, warning = F, out.height=500,out.width=600, dpi = 300}
+# Crosscut Example Continued
+
+```{r, crosscut-motivation, echo=FALSE, fig.align = "center", message=FALSE, warning = F, out.height=350,out.width=700, dpi = 400}
 if (!file.exists("../data/ccdata.rds")) {
 x3p <- read_x3p("../data/HS44 - Barrel 7 - Bullet 1 - Land 3 - Scan 1 - Sneox1 - 20x - auto light left image +20 perc. - threshold 2 - resolution 4 - Marco Yepez.x3p")
 # HH: this x3p file is flipped along the y axis. The crosscut will not extract a good signature
@@ -133,6 +145,31 @@ ccdata %>%
 ```
 
 ---
+# Groove identification and Signatures
+
+```{r signal-motivation, echo = FALSE, warning = FALSE, message=FALSE,fig.align="center", out.height=350,out.width=700, dpi = 400}
+sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.05)
+grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2]))
+
+sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.05)
+
+sigs1 %>% 
+  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x/1000)) + 
+  geom_line(aes(y = raw_sig, colour = "mis-specified", linetype="raw signature" ), alpha = 0.5, data = sigs2) +
+  geom_line(aes(y = sig, colour = "mis-specified", linetype="smoothed signature"),size=1, data = sigs2) +
+  geom_line(aes(y = raw_sig, colour = "well-specified", linetype="raw signature"), alpha = 0.5,) +
+  geom_line(aes(y = sig, colour = "well-specified", linetype="smoothed signature"), size=1) +
+  scale_colour_manual("Left Groove", values = c("orange", "steelblue")) +
+  scale_linetype_manual("Signature", values = c(1,2)) +
+  ylim(c(-5,7.5)) +
+  #xlim(c(0, 1)) +
+  theme_bw() +
+  ylab("Relative heigh measurement (in micron)") +
+  xlab("LEA signature (in millimeters)") +
+  theme(legend.position = "bottom")
+```
+
  
 ---
 class: inverse, center, middle
@@ -141,12 +178,67 @@ class: inverse, center, middle
 ---
 # Previous Applications of Edge Detection
 
+- Edge detection methods related to the Hough transform such as Canny Edge detection have been used in previous research
 
+- Canny edge detection was used to establish either a quality metric for the amount of usable striae information contained in a bullet image or to identify areas on LEAs where CCF could be applied for bullet matching
+
+--
+- The results described in these works are not done so in enough detail to allow for replication or outsider research scrutiny
+
+--
+
+- And in fact the bulk of these results rely on the manual identification of groove engraved areas
+
+.footnote[
+[2] `r RefManageR::Citet(myBib,3)`
+[3] `r RefManageR::Citet(myBib,4)`
+[4] `r RefManageR::Citet(myBib,5)`
+]
 ---
 # Evaluation of Groove Identification
 
+- To evaluate the accuracy of our Hough transform method estimates we will use a score metric known as the Area of Mis-identification
 
+--
+
+- Essentially two different signatures can be created from the residuals of the Robust Loess, one associated with our Hough transform estimate and one associated with a manually identified groove location
+
+--
+- We can then integrate between these two signatures creating an area in $\text{microns}^2$
+
+```{r AOM, echo = FALSE, warning = FALSE, message=FALSE,fig.align="center", out.height= 200,out.width=500, dpi = 400}
+sigs1 <- cc_get_signature(ccdata, grooves, span1 = 0.75, span2 = 0.05)
+grooves.bad <- list("groove" = c(grooves$groove[1] -50, grooves$groove[2]))
+
+sigs2 <- cc_get_signature(ccdata, grooves.bad, span1 = 0.75, span2 = 0.05)
+
+sigs.combined <- data.frame(sigs1, bad.sig =sigs2$sig)
+
+
+sigs1 %>% 
+  dplyr::filter(!is.na(sig),!is.na(raw_sig)) %>%
+  ggplot(aes(x = x/1000)) + 
+  geom_line(aes(y = raw_sig, colour = "mis-specified", linetype="raw signature" ), alpha = 0.5, data = sigs2) +
+  geom_line(aes(y = sig, colour = "mis-specified", linetype="smoothed signature"),size=1, data = sigs2) +
+  geom_line(aes(y = raw_sig, colour = "well-specified", linetype="raw signature"), alpha = 0.5,) +
+  geom_line(aes(y = sig, colour = "well-specified", linetype="smoothed signature"), size=1) +
+  geom_ribbon(data=subset(sigs.combined, 0 <= x/1000 & x/1000 <= 0.5), aes(ymin= bad.sig, ymax = sig), fill="mediumorchid2", alpha=0.5) +
+  scale_colour_manual("Left Groove", values = c("orange", "steelblue")) +
+  scale_linetype_manual("Signature", values = c(1,2)) +
+  ylim(c(-5,7.5)) +
+  #xlim(c(0, 1)) +
+  theme_bw() +
+  ylab("Relative heigh measurement (in micron)") +
+  xlab("LEA signature (in millimeters)") +
+  theme(legend.position = "bottom")
+```
+
+
+.footnote[
+[5] `r RefManageR::Citet(myBib,7)`
+]
 ---
+
 # Introduction to the Hough transform
 
 - The Hough transform is a low-level feature extraction algorithm that can detect user-specified shapes in an image
@@ -155,16 +247,196 @@ class: inverse, center, middle
 - Points that lie on a line in an image can be translated to intersecting lines in the feature space
 
 
-- 
+```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=300, out.width = 600}
 
-
-```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=200, out.width=300}
 knitr::include_graphics(path = "../images/feature-space.png")
 ```
 
+---
+
+# Introduction to the Hough transform
+
+- The feature space can then be separated into bins that track the number of intersections in the feature space
+
+- A large number of intersections at a particular set of features is thus indicative of a line 
+
+- When we perform the Hough transform on bullet data we use what is known as CImgs (cool images) which are stored in a way so that the default image extends the y-axis in a downward direction. 
+
+
+```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=300, out.width = 300}
+
+knitr::include_graphics(path = "../images/accumulator2.png")
+```
+
+---
+class: inverse, center, middle
+# Methods
+
+---
+# Image Gradients
+
+- To reduce the noise in our image we convert the 3-dimensional x3ps into 2-dimensional gradient images
+
+- We then choose only the edges with a magnitude in the 99th percentile -i.e. only the very strong edges
+
+```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=300, out.width = 600}
+knitr::include_graphics(path = "../images/strong-edge.png")
+```
+
+---
+# Canny Edge
+
+- An important departure from previous work explaining the Hough transform is that we decided not to fully carry out Canny edge detection before applying the Hough transform
+
+- The reason for this is that Canny edge detection dramatically increased our processing time for making a Hough estimate and did not necessarily improve the accuracy of our results
+
+
+```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=200, out.width = 400}
+knitr::include_graphics(path = "../images/canny-edge.png")
+```
+
+.footnote[
+[6] `r RefManageR::Citet(myBib,8)`
+]
+---
+# Hough Transform
+
+- Once the Hough transform is applied using the `hough_lines` function from the imager package, we receive a dataframe of dected lines in Hessian Normal Form
+
+--
+
+$\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
+
+```{r hessian-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "80%", fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan"}
+knitr::include_graphics(path ='../images/hessian-example.png')
+
+```
+
+---
+# Theta Filtering
+
+- The default Hough lines detected have $\theta$ angles between $-2\pi$ and $2\pi$
+
+- For ease of filter we transform any lines with $\theta$ angles greater than $\pi$ to be between $-\pi$ and 0.
+
+- We typically expect most grooves to be vertical lines so we select only the Hough estimates with $\theta$ angles between $\frac{-\pi}{16}$ to $\frac{\pi}{16}$
+
+```{r hessian-graphic-inclusion-again, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "60%", fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan"}
+knitr::include_graphics(path ='../images/hessian-example.png')
+
+```
+
+---
+#  Definitions
+
+- $x_t$: The x-intercept at the top of the bullet land
+
+--
+
+- $x_b$: The x-intercept at the bottom of the bullet land
+
+--
+
+- $\delta$: The difference between $x_t$ and $x_b$ in the x-direction
+
+--
+
+- $h$: The height of the bullet land
+
+--
+
+- $m_y$: The slope of the detected Hough line in the y-direction
+
+--
+
+- $m_x$: The slope of the detected Hough line in the x-direction
 
 
 ---
+
+# Calculating $x_b$
+
+- When our detected Hough line is not perfectly vertical (i.e.$\theta \neq 0$) we can utilize:
+    - $x_t = \frac{\rho}{\cos(\theta)}$
+
+- Using geometric properties: $\delta = \tan(\theta)*\text{h}$. Thus $x_b = x_t - \delta$
+
+- We can then use $x_b$ to calculate $m_y$ which is numerically more stable
+
+```{r xbottom-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "60%", fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA"}
+include_graphics('../images/calc-xbottom.png')
+
+```
+---
+# Normalized Scores
+
+- We hypothesize that the lines with the largest "Hough score" ($\psi$) are those along the grooves of our bullet land
+
+- We choose to normalize these scores ($\psi_{norm}$) before selecting the Hough line
+
+- Theoretically longer lines detected in the image will have a larger possible maximum score ($\psi_{max}$) 
+
+```{r max-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "60%", fig.cap= "Demonstration of calculation of theoretical maximum score"}
+include_graphics('../images/calc-theoretical-max.png')
+
+```
+
+---
+# Normalized Scores
+
+- We calculate the largest possible theoretical score($\psi_{max}$) using the following.
+ 
+  - $\psi_{max} = \frac{h}{\cos(\theta)}$
+  
+- Then for each set of unique features the normalized score is given by 
+
+  -  $\psi_{norm} = \frac{\psi}{\psi_{max}}$
+  
+---
+# Middle Fifty Heuristic
+
+- To further specify appropriate Hough estimates, we reason that most grooves will not fall within the middle 50% of the bullet land
+
+- In the off case that the highest normalized Hough score is within the middle 50% the groove is arbitrarily set to the middle 50% boundaries. 
+
+```{r middle-fifty, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Land Engraved Areas with Edges with magnitudes in the 99th percentile and middle 50 percent marked"}
+
+dx <- imgradient(cimg, "x")
+dy <- imgradient(cimg, "y")
+grad.mag <- sqrt(dx^2+dy^2)
+
+strong <- grad.mag > quantile(grad.mag, .99, na.rm = TRUE)
+
+strong.raster <- imager:::as.data.frame.cimg(strong)
+
+
+lfourth <- width(strong)/4
+ufourth <- 3*width(strong)/4
+
+ggplot()+
+  geom_raster(data = strong.raster, aes(x = x, y = y, fill = value)) +
+  scale_y_continuous(trans = "reverse") +
+  scale_fill_manual(values = c("black", "white", "grey"))+
+  coord_fixed() +
+  guides(fill = FALSE) + 
+  geom_vline(xintercept = lfourth, col = "green", lwd = 2)+
+  geom_vline(xintercept = ufourth, col = "green", lwd = 2)
+```
+
+---
+# `get_hough_grooves` Output
+
+- Unlike other methods available in the GrooveFinder package, the Hough transform method outputs two working linear functions to describe the the left and right-hand side of grooves on an individual bullet land
+
+- Both functions receive as an input a y-location of a particular crosscut of the bullet land denoted by $y_i$ 
+
+- To transform the values detected by the Hough transform into microns rather than pixels we use the helper function `pix_to_microns` and the x3p-scan resolution
+  - $r_s$ 
+- Each test set tends to have an optimal adjust value denoted as $\alpha$ resulting in the following left hand and right hand groove estimates respectively:
+
+- $\gamma_{lh} = (x_b -1)*r_s + m_y*y_{i} + \alpha$
+-  $\gamma_{rh} = (x_b -1)*r_s + m_y*y_{i} - \alpha$
+
 
 ---
 class: inverse, center, middle

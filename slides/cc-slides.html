@@ -43,15 +43,24 @@ class: center, middle, inverse, title-slide
  
  - Background Information
  
- - Pre-processing procedures
- 
- - Hough Transform Procedure
+ - Methods
 
  - Results &amp; Discussion
  
 ---
 class: inverse, center, middle
 #Motivation
+---
+.center2[In 2009, the National Academy of Sciences published a report (National Research Council, 2009) questioning the scientific validity of many forensic methods including firearm examination.
+]
+
+---
+.center2[
+&lt;div class="figure" style="text-align: middle"&gt;
+&lt;img src="../images/microscope-bullet.jpg" alt="Bullet in a stage under a confocal light microscope. The green lit area covers the scan of a LEA (land engraved area)." width="400" height="300" /&gt;
+&lt;p class="caption"&gt;Bullet in a stage under a confocal light microscope. The green lit area covers the scan of a LEA (land engraved area).&lt;/p&gt;
+&lt;/div&gt;
+]
 ---
 
 # Anatomy of a Bullet Land
@@ -63,8 +72,11 @@ class: inverse, center, middle
 -  The raised shoulders in these images represent the beginnings of groove engraved areas(GEAs)
 
 
-&lt;img src="../images/hare-bullet-anatomy-image.png" width="400" height="300" style="display: block; margin: auto;" /&gt;
+&lt;img src="../images/hare-bullet-anatomy-image.png" width="350" height="250" style="display: block; margin: auto;" /&gt;
 
+.footnote[
+[1] Hare, Hofmann, and Carriquiry [HHC17]
+]
 ---
 
 # Crosscut Example
@@ -73,14 +85,19 @@ class: inverse, center, middle
 
 - This can come from the selection of an optimized y-location on a bullet land or as an average across a small horizontal section of a bullet land
 
-&lt;img src="../images/microscope-bullet.jpg" width="400" height="300" /&gt;
+&lt;img src="../images/crosscut-location-example.png" width="700" height="300" style="display: block; margin: auto;" /&gt;
 
 ---
-# Crosscut Example
 
-&lt;img src="cc-slides_files/figure-html/crosscut-motivation-1.png" width="600" height="500" style="display: block; margin: auto;" /&gt;
+# Crosscut Example Continued
+
+&lt;img src="cc-slides_files/figure-html/crosscut-motivation-1.png" width="700" height="350" style="display: block; margin: auto;" /&gt;
 
 ---
+# Groove identification and Signatures
+
+&lt;img src="cc-slides_files/figure-html/signal-motivation-1.png" width="700" height="350" style="display: block; margin: auto;" /&gt;
+
  
 ---
 class: inverse, center, middle
@@ -89,12 +106,42 @@ class: inverse, center, middle
 ---
 # Previous Applications of Edge Detection
 
+- Edge detection methods related to the Hough transform such as Canny Edge detection have been used in previous research
 
+- Canny edge detection was used to establish either a quality metric for the amount of usable striae information contained in a bullet image or to identify areas on LEAs where CCF could be applied for bullet matching
+
+--
+- The results described in these works are not done so in enough detail to allow for replication or outsider research scrutiny
+
+--
+
+- And in fact the bulk of these results rely on the manual identification of groove engraved areas
+
+.footnote[
+[2] Chu, Song, Vorburger, and Ballou [Chu+10]
+[3] Chu, Song, Vorburger, and Thompson [Chu+13]
+[4] Chu, Song, Vorburger, Yen, Ballou, and Bachrach [Chu+10]
+]
 ---
 # Evaluation of Groove Identification
 
+- To evaluate the accuracy of our Hough transform method estimates we will use a score metric known as the Area of Mis-identification
 
+--
+
+- Essentially two different signatures can be created from the residuals of the Robust Loess, one associated with our Hough transform estimate and one associated with a manually identified groove location
+
+--
+- We can then integrate between these two signatures creating an area in `\(\text{microns}^2\)`
+
+&lt;img src="cc-slides_files/figure-html/AOM-1.png" width="500" height="200" style="display: block; margin: auto;" /&gt;
+
+
+.footnote[
+[5] Rice, Garton, Genschel, and Hofmann [Ric+19]
+]
 ---
+
 # Introduction to the Hough transform
 
 - The Hough transform is a low-level feature extraction algorithm that can detect user-specified shapes in an image
@@ -103,14 +150,167 @@ class: inverse, center, middle
 - Points that lie on a line in an image can be translated to intersecting lines in the feature space
 
 
-- 
+&lt;img src="../images/feature-space.png" width="600" height="300" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Introduction to the Hough transform
+
+- The feature space can then be separated into bins that track the number of intersections in the feature space
+
+- A large number of intersections at a particular set of features is thus indicative of a line 
+
+- When we perform the Hough transform on bullet data we use what is known as CImgs (cool images) which are stored in a way so that the default image extends the y-axis in a downward direction. 
 
 
-&lt;img src="../images/feature-space.png" width="300" height="200" style="display: block; margin: auto;" /&gt;
+&lt;img src="../images/accumulator2.png" width="300" height="300" style="display: block; margin: auto;" /&gt;
 
+---
+class: inverse, center, middle
+# Methods
+
+---
+# Image Gradients
+
+- To reduce the noise in our image we convert the 3-dimensional x3ps into 2-dimensional gradient images
+
+- We then choose only the edges with a magnitude in the 99th percentile -i.e. only the very strong edges
+
+&lt;img src="../images/strong-edge.png" width="600" height="300" style="display: block; margin: auto;" /&gt;
+
+---
+# Canny Edge
+
+- An important departure from previous work explaining the Hough transform is that we decided not to fully carry out Canny edge detection before applying the Hough transform
+
+- The reason for this is that Canny edge detection dramatically increased our processing time for making a Hough estimate and did not necessarily improve the accuracy of our results
+
+
+&lt;img src="../images/canny-edge.png" width="400" height="200" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+[6] Illingworth and Kittler [IK87]
+]
+---
+# Hough Transform
+
+- Once the Hough transform is applied using the `hough_lines` function from the imager package, we receive a dataframe of dected lines in Hessian Normal Form
+
+--
+
+`\(\rho = x \ cos(\theta) \ + \ y \ sin(\theta)\)`
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="../images/hessian-example.png" alt="Example of Hessian Normal Form parametrization overlaid a bullet scan" width="80%" /&gt;
+&lt;p class="caption"&gt;Example of Hessian Normal Form parametrization overlaid a bullet scan&lt;/p&gt;
+&lt;/div&gt;
+
+---
+# Theta Filtering
+
+- The default Hough lines detected have `\(\theta\)` angles between `\(-2\pi\)` and `\(2\pi\)`
+
+- For ease of filter we transform any lines with `\(\theta\)` angles greater than `\(\pi\)` to be between `\(-\pi\)` and 0.
+
+- We typically expect most grooves to be vertical lines so we select only the Hough estimates with `\(\theta\)` angles between `\(\frac{-\pi}{16}\)` to `\(\frac{\pi}{16}\)`
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="../images/hessian-example.png" alt="Example of Hessian Normal Form parametrization overlaid a bullet scan" width="60%" /&gt;
+&lt;p class="caption"&gt;Example of Hessian Normal Form parametrization overlaid a bullet scan&lt;/p&gt;
+&lt;/div&gt;
+
+---
+#  Definitions
+
+- `\(x_t\)`: The x-intercept at the top of the bullet land
+
+--
+
+- `\(x_b\)`: The x-intercept at the bottom of the bullet land
+
+--
+
+- `\(\delta\)`: The difference between `\(x_t\)` and `\(x_b\)` in the x-direction
+
+--
+
+- `\(h\)`: The height of the bullet land
+
+--
+
+- `\(m_y\)`: The slope of the detected Hough line in the y-direction
+
+--
+
+- `\(m_x\)`: The slope of the detected Hough line in the x-direction
 
 
 ---
+
+# Calculating `\(x_b\)`
+
+- When our detected Hough line is not perfectly vertical (i.e.$\theta \neq 0$) we can utilize:
+    - `\(x_t = \frac{\rho}{\cos(\theta)}\)`
+
+- Using geometric properties: `\(\delta = \tan(\theta)*\text{h}\)`. Thus `\(x_b = x_t - \delta\)`
+
+- We can then use `\(x_b\)` to calculate `\(m_y\)` which is numerically more stable
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="../images/calc-xbottom.png" alt="Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA" width="60%" /&gt;
+&lt;p class="caption"&gt;Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA&lt;/p&gt;
+&lt;/div&gt;
+---
+# Normalized Scores
+
+- We hypothesize that the lines with the largest "Hough score" ($\psi$) are those along the grooves of our bullet land
+
+- We choose to normalize these scores ($\psi_{norm}$) before selecting the Hough line
+
+- Theoretically longer lines detected in the image will have a larger possible maximum score ($\psi_{max}$) 
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="../images/calc-theoretical-max.png" alt="Demonstration of calculation of theoretical maximum score" width="60%" /&gt;
+&lt;p class="caption"&gt;Demonstration of calculation of theoretical maximum score&lt;/p&gt;
+&lt;/div&gt;
+
+---
+# Normalized Scores
+
+- We calculate the largest possible theoretical score($\psi_{max}$) using the following.
+ 
+  - `\(\psi_{max} = \frac{h}{\cos(\theta)}\)`
+  
+- Then for each set of unique features the normalized score is given by 
+
+  -  `\(\psi_{norm} = \frac{\psi}{\psi_{max}}\)`
+  
+---
+# Middle Fifty Heuristic
+
+- To further specify appropriate Hough estimates, we reason that most grooves will not fall within the middle 50% of the bullet land
+
+- In the off case that the highest normalized Hough score is within the middle 50% the groove is arbitrarily set to the middle 50% boundaries. 
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="cc-slides_files/figure-html/middle-fifty-1.png" alt="Land Engraved Areas with Edges with magnitudes in the 99th percentile and middle 50 percent marked"  /&gt;
+&lt;p class="caption"&gt;Land Engraved Areas with Edges with magnitudes in the 99th percentile and middle 50 percent marked&lt;/p&gt;
+&lt;/div&gt;
+
+---
+# `get_hough_grooves` Output
+
+- Unlike other methods available in the GrooveFinder package, the Hough transform method outputs two working linear functions to describe the the left and right-hand side of grooves on an individual bullet land
+
+- Both functions receive as an input a y-location of a particular crosscut of the bullet land denoted by `\(y_i\)` 
+
+- To transform the values detected by the Hough transform into microns rather than pixels we use the helper function `pix_to_microns` and the x3p-scan resolution
+  - `\(r_s\)` 
+- Each test set tends to have an optimal adjust value denoted as `\(\alpha\)` resulting in the following left hand and right hand groove estimates respectively:
+
+- `\(\gamma_{lh} = (x_b -1)*r_s + m_y*y_{i} + \alpha\)`
+-  `\(\gamma_{rh} = (x_b -1)*r_s + m_y*y_{i} - \alpha\)`
+
 
 ---
 class: inverse, center, middle
@@ -136,12 +336,29 @@ class: inverse, center, middle
 
 ---
 # References
+Chu, W., J. Song, et al. (2010). "Striation Density for Predicting the
+Identifiability of Fired Bullets with Automated Inspection Systems".
+In: _The Journal of Forensic Sciences_ 55.5, pp. 1222 - 1226.
 
-```
-## You haven't cited any references in this bibliography yet.
-```
+Chu, W., J. Song, et al. (2013). "Automatic identification of bullet
+signatures based on consecutive matching striae (CMS) criteria". In:
+_Forensic Science International_ 231, pp. 137-141.
 
-NULL
+Chu, W., J. Song, et al. (2010). "Pilot Study of Automated Bullet
+Signature Identification Based on Topography Measurements and
+Correlations". In: _Forensic Science International_, pp. 341-347.
+
+Hare, E., H. Hofmann, et al. (2017). "Automatic Matching of Bullet Land
+Impressions". In: _The Annals of Applied Statistics_ 11.4, pp.
+2332-2356.
+
+Illingworth, J. and J. Kittler (1987). "A Survey of the Hough
+Transform". In: _Computer Vision, Graphics and Image Processing_ 44,
+pp. 87-116.
+
+Rice, K., N. Garton, et al. (2019). "Statistical Approaches to
+Automated Groove Engraved Area Identification in 3d Bullet Land Scans".
+In: _Manuscript in Preparation_.
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
