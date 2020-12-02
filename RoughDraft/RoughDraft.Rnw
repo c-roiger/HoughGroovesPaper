@@ -1,5 +1,5 @@
 \documentclass[12pt]{article}
-\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx,subcaption, tikz, caption, float}
+\usepackage{amsmath,amssymb,mathrsfs,fancyhdr,syntonly,lastpage,hyperref,enumitem,graphicx,subcaption, tikz, caption, float, booktabs}
 \usepackage[authoryear]{natbib} % Natbib options, [numbers] would give numerical citations.
 \bibpunct{(}{)}{;}{a}{,}{,} % Tells it how you want references displaying in the text.
 
@@ -44,6 +44,7 @@ library(png)
 library(usethis)
 library(cowplot)
 library(magick)
+library(kableExtra)
 
 
 opts_chunk$set(echo=FALSE, cache=TRUE, fig.width=7, fig.height = 7)
@@ -52,7 +53,7 @@ opts_chunk$set(fig.pos = 'H')
 
 \begin{document}
 \lhead{\today}
-\chead{CSAFE - Hough Grooves Document Process}
+\chead{Creative Component}
 \rhead{Page \thepage\ of \pageref{LastPage}}
 
 \begin{titlepage}
@@ -619,7 +620,6 @@ phoenix.df %>%
   
 @
 
-
 <<phoenix-score-dist-bp, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Boxplots of AOM scores for the Phoenix PD set separated by groove side and method">>=
 
 phoenix.df %>%
@@ -632,6 +632,42 @@ phoenix.df %>%
 @
 \newpage
 
+<<phoenix-score-table, echo = FALSE, eval = F, message=FALSE>>=
+
+# Create dataframe with summary statistics
+table.df <- phoenix.df %>%
+  dplyr::filter(score != 0) %>%
+  dplyr::group_by(method, groove_chirality) %>%
+  dplyr::summarise(Mean = mean(log(score), na.rm = T, ),
+            Variance = var(log(score), na.rm = T),
+            Median = median(log(score), na.rm = T),
+            Minimum = min(log(score), na.rm = T),
+            Maximum = max(log(score), na.rm = T))
+table.df <- table.df %>%
+  dplyr::rename(`Method` = method, 
+                `Groove Chirality`= groove_chirality)
+
+# Kable-extra styling will not work... 
+# 
+# kableExtra::kbl(table.df, caption = "Table of Summary Statistics of Logged AOM scores by method and groove chirality for the Phoenix PD Set", booktabs = T) %>%
+#   kableExtra::kable_styling(latex_options = c("striped", "hold_position"))
+
+@
+
+
+\begin{table}[ht!]
+\begin{tabular}{lllllll}
+\textbf{Method} & \textbf{Groove Chirality} & \textbf{Mean} & \textbf{Variance} & \textbf{Median} & \textbf{Minimum} & \textbf{Maximum} \\ \hline
+Hough           & Left                      & 5.823         & 4.833             & 5.669           & 0.294            & 10.328           \\
+Rollapply       & Left                      & 6.805         & 6.329             & 6.550           & -0.976           & 10.943           \\
+Hough           & Right                     & 5.211         & 2.493             & 5.598           & 1.054            & 8.691            \\
+Rollapply       & Right                     & 5.469         & 2.580             & 5.159           & 1.211            & 9.657            \\ \hline
+\end{tabular}
+\caption{Table of summary statistics for logged AOM scores for the Phoenix PD Set}
+\label{table:phoenix-table}
+\end{table}
+
+In the above table, we include some useful summary statistics of the logged AOM scores. In general the means and variances of both methods for each groove are consistent with the conclusions presented earlier in this section. It appears that for both the left and right groove, the Hough method has a lower average logged AOM score and a lower variance. An item of note is that ten Hough groove estimates were omitted from the above calculations because these estimates had a logged AOM score of negative infinity which corresponds to an AOM score of 0. 
 
 We see similar results in the Hamby Set 44 for both the left-hand and right-hand groove estimates. In Figure~\ref{fig:hamby44-score-dist-density} we see the density distribution of AOM scores for the Hamby Set 44. For the left hand side, there appears to be a large spread of AOM scores for both the Rollapply and Hough method, however the Hough method has a slightly higher concentration of AOM scores at lower values than the Rollapply method. A similar story can be seen for the right hand groove where both method appear to have a large number of scores clustered near zero, but the Hough method has a larger density of scores at lower values.  
 
@@ -657,6 +693,7 @@ hamby44.df %>%
   facet_wrap(~groove_chirality, nrow = 2) 
   
 @
+\newpage
 
 When the logged AOM scores are displayed as box plots we can easily see that for the left groove the Hough method 
 has a smaller spread of logged AOM scores and also has a lower median logged AOM score than that of the Rollapply method. For the right groove it appears that both methods have a similar median, however the distribution of the Hough method is somewhat lower than the Rollapply method. 
@@ -674,6 +711,37 @@ hamby44.df %>%
   
 @
 
+In Table 2, we once again provide summary statistics of the logged AOM scores. For this set, thirty seven Hough groove estimates were omitted from the summary statistic calculations because these estimates had a logged AOM score of negative infinity (AOM score of 0). For both left and right-hand grooves, the Hough method has a lower average and standard deviation than that of the Rollapply method. However the distributions are much closer in shape and spread for the right-hand groove estimate for this particular set.
+
+\begin{table}[ht!]
+\begin{tabular}{lllllll}
+\textbf{Method} & \textbf{Groove Chirality} & \textbf{Mean} & \textbf{Variance} & \textbf{Median} & \textbf{Minimum} & \textbf{Maximum} \\ \hline
+Hough           & Left                      & 6.374         & 2.956             & 6.775           & 0.3613           & 9.291           \\
+Rollapply       & Left                      & 6.505         & 4.111             & 7.267           & -1.553           & 9.001           \\
+Hough           & Right                     & 5.149         & 3.856             & 5.144           & -2.561           & 10.267            \\
+Rollapply       & Right                     & 5.401         & 4.077             & 5.169           & 0.153            & 9.734            \\ \hline
+\end{tabular}
+\caption{Table of summary statistics for logged AOM scores for the Hamby Set 44}
+\label{table:hamby-table}
+\end{table}
+
+<<hamby-score-table, echo = FALSE, eval = F, message=FALSE>>=
+
+# Create dataframe with summary statistics
+table.df <- hamby44.df %>%
+  dplyr::filter(score != 0) %>%
+  dplyr::group_by(method, groove_chirality) %>%
+  dplyr::summarise(Mean = mean(log(score), na.rm = T, ),
+            Variance = var(log(score), na.rm = T),
+            Median = median(log(score), na.rm = T),
+            Minimum = min(log(score), na.rm = T),
+            Maximum = max(log(score), na.rm = T))
+table.df <- table.df %>%
+  dplyr::rename(`Method` = method, 
+                `Groove Chirality`= groove_chirality)
+
+@
+\newpage
 \section{Conclusion}
 
 Overall, the Hough method appears to offer a slight improvement in groove location identification than the Rollapply method presented by \cite{hare2017}. Interestingly enough, the effectiveness of the Hough method varies with the side of the groove being identified. As demonstrated in both the Phoenix PD Set and the Hamby Set 44, it seems as if the identifications for both the Hough and Rollapply method are more accurate on the right hand side of the bullet land. It is worth noting however, that the method we use to evaluate the accuracy of groove identifications (AOM scores) contains a slight bias towards the Rollapply method. The reason for this is that the manual groove identifications were made as adjustments to existing Rollapply groove estimates. So reasonably accurate Rollapply estimates of groove locations were accepted without adjustment as a proper identification while less accurate Rollapply estimates were adjusted accordingly. Regardless, the appeal of the Hough method lies in its relative simplicity as an application of a simple computer vision algorithm and its ability to draw information from the entirety of a bullet scan. Further examination of the precision of some of the heuristics used to define this process would be good candidates for further examination. 
