@@ -178,11 +178,13 @@ class: inverse, center, middle
 ---
 # Previous Applications of Edge Detection
 
-- Edge detection methods related to the Hough transform such as Canny Edge detection have been used in previous research
+- Chu et al. (2010)[2]: Used Edge detection to quantify the quality of striae detected in a bullet scan
 
-- Canny edge detection was used to establish either a quality metric for the amount of usable striae information contained in a bullet image or to identify areas on LEAs where CCF could be applied for bullet matching
+
+- Chu et al. (2013)[3]: Used Canny Edge detection to identify areas of bullet lands where CCF[4] could be applied for bullet matching
 
 --
+
 - The results described in these works are not done so in enough detail to allow for replication or outsider research scrutiny
 
 --
@@ -197,13 +199,12 @@ class: inverse, center, middle
 ---
 # Evaluation of Groove Identification
 
-- To evaluate the accuracy of our Hough transform method estimates we will use a score metric known as the Area of Mis-identification
+- Evaluate the accuracy of our estimates using the Area of Mis-identification(AOM) [5]
 
---
 
-- Essentially two different signatures can be created from the residuals of the Robust Loess, one associated with our Hough transform estimate and one associated with a manually identified groove location
+- Two signatures are created one for our Hough estimate and one for manually-identified grooves
 
---
+
 - We can then integrate between these two signatures creating an area in $\text{microns}^2$
 
 ```{r AOM, echo = FALSE, warning = FALSE, message=FALSE,fig.align="center", out.height= 200,out.width=500, dpi = 400}
@@ -260,7 +261,7 @@ knitr::include_graphics(path = "../images/feature-space.png")
 
 - A large number of intersections at a particular set of features is thus indicative of a line 
 
-- When we perform the Hough transform on bullet data we use what is known as CImgs (cool images) which are stored in a way so that the default image extends the y-axis in a downward direction. 
+- We perform the Hough transform on CImgs (cool images) which are stored in a way so that the default image extends the y-axis in a downward direction. 
 
 
 ```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=300, out.width = 300}
@@ -286,12 +287,12 @@ knitr::include_graphics(path = "../images/strong-edge.png")
 ---
 # Canny Edge
 
-- An important departure from previous work explaining the Hough transform is that we decided not to fully carry out Canny edge detection before applying the Hough transform
+- We decided not to fully carry out Canny edge detection before applying the Hough transform [6]
 
-- The reason for this is that Canny edge detection dramatically increased our processing time for making a Hough estimate and did not necessarily improve the accuracy of our results
+- Canny edge detection dramatically increased our processing time and did not necessarily improve accuracy
 
 
-```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=200, out.width = 400}
+```{r echo=FALSE,eval=TRUE,fig.align='center', out.height=300, out.width = 600}
 knitr::include_graphics(path = "../images/canny-edge.png")
 ```
 
@@ -301,11 +302,11 @@ knitr::include_graphics(path = "../images/canny-edge.png")
 ---
 # Hough Transform
 
-- Once the Hough transform is applied using the `hough_lines` function from the imager package, we receive a dataframe of dected lines in Hessian Normal Form
+- Once the Hough transform is applied using the `hough_lines` function from the imager package, we receive a dataframe of detected lines in Hessian Normal Form
 
 --
 
-$\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
+- $\rho = x \ cos(\theta) \ + \ y \ sin(\theta)$
 
 ```{r hessian-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "80%", fig.cap= "Example of Hessian Normal Form parametrization overlaid a bullet scan"}
 knitr::include_graphics(path ='../images/hessian-example.png')
@@ -315,9 +316,9 @@ knitr::include_graphics(path ='../images/hessian-example.png')
 ---
 # Theta Filtering
 
-- The default Hough lines detected have $\theta$ angles between $-2\pi$ and $2\pi$
+- The default Hough lines detected have $\theta$ angles between $0$ and $2\pi$
 
-- For ease of filter we transform any lines with $\theta$ angles greater than $\pi$ to be between $-\pi$ and 0.
+- For ease of filtering we transform $\theta$ angles to be in the interval $-\pi$ and $\pi$.
 
 - We typically expect most grooves to be vertical lines so we select only the Hough estimates with $\theta$ angles between $\frac{-\pi}{16}$ to $\frac{\pi}{16}$
 
@@ -329,11 +330,11 @@ knitr::include_graphics(path ='../images/hessian-example.png')
 ---
 #  Definitions
 
-- $x_t$: The x-intercept at the top of the bullet land
+- $x_t$: The x-value where the Hough line intersects the top of the bullet land
 
 --
 
-- $x_b$: The x-intercept at the bottom of the bullet land
+- $x_b$: The x-value where the Hough line intersects the bottom of the bullet land
 
 --
 
@@ -351,15 +352,19 @@ knitr::include_graphics(path ='../images/hessian-example.png')
 
 - $m_x$: The slope of the detected Hough line in the x-direction
 
+```{r xbottom-graphic-inclusion-first, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "50%", fig.cap= "Demonstration of calculation of bottom intercept of a bullet land using SOH-CAH-TOA"}
+include_graphics('../images/calc-xbottom.png')
+
+```
 
 ---
 
 # Calculating $x_b$
 
-- When our detected Hough line is not perfectly vertical (i.e.$\theta \neq 0$) we can utilize:
+- When our detected Hough line is not perfectly vertical (i.e. $\theta \neq 0$ ) we can utilize:
     - $x_t = \frac{\rho}{\cos(\theta)}$
 
-- Using geometric properties: $\delta = \tan(\theta)*\text{h}$. Thus $x_b = x_t - \delta$
+- Using geometric properties: $\delta = \tan(\theta)*\text{h}$. Thus $x_b$ = $x_t$ - $\delta$ 
 
 - We can then use $x_b$ to calculate $m_y$ which is numerically more stable
 
@@ -370,11 +375,11 @@ include_graphics('../images/calc-xbottom.png')
 ---
 # Normalized Scores
 
-- We hypothesize that the lines with the largest "Hough score" ($\psi$) are those along the grooves of our bullet land
+- We hypothesize that the lines with the largest "Hough score" ( $\psi$ ) are those along the grooves of our bullet land
 
-- We choose to normalize these scores ($\psi_{norm}$) before selecting the Hough line
+- We choose to normalize these scores ( $\psi_{norm}$ ) before selecting the Hough line
 
-- Theoretically longer lines detected in the image will have a larger possible maximum score ($\psi_{max}$) 
+- Theoretically longer lines detected in the image will have a larger possible maximum score ( $\psi_{max}$ ) 
 
 ```{r max-graphic-inclusion, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "60%", fig.cap= "Demonstration of calculation of theoretical maximum score"}
 include_graphics('../images/calc-theoretical-max.png')
@@ -384,13 +389,18 @@ include_graphics('../images/calc-theoretical-max.png')
 ---
 # Normalized Scores
 
-- We calculate the largest possible theoretical score($\psi_{max}$) using the following.
+- We calculate the largest possible theoretical score( $\psi_{max}$ ) using the following.
  
   - $\psi_{max} = \frac{h}{\cos(\theta)}$
   
 - Then for each set of unique features the normalized score is given by 
 
   -  $\psi_{norm} = \frac{\psi}{\psi_{max}}$
+  
+```{r max-graphic-inclusion-2, echo = FALSE, fig.align="center", message=FALSE, warning = F, out.width= "60%", fig.cap= "Demonstration of calculation of theoretical maximum score"}
+include_graphics('../images/calc-theoretical-max.png')
+
+```
   
 ---
 # Middle Fifty Heuristic
@@ -424,18 +434,36 @@ ggplot()+
 ```
 
 ---
-# `get_hough_grooves` Output
+# Function Output
 
-- Unlike other methods available in the GrooveFinder package, the Hough transform method outputs two working linear functions to describe the the left and right-hand side of grooves on an individual bullet land
+- The Hough transform method outputs two linear equations: the left ( $\gamma_{lh}$ ) and right-hand ( $\gamma_{rh}$ )side groove estimates
 
-- Both functions receive as an input a y-location of a particular crosscut of the bullet land denoted by $y_i$ 
+- Both functions use the y-locations of a crosscut as an input, denoted as $y_i$ 
 
-- To transform the values detected by the Hough transform into microns rather than pixels we use the helper function `pix_to_microns` and the x3p-scan resolution
-  - $r_s$ 
-- Each test set tends to have an optimal adjust value denoted as $\alpha$ resulting in the following left hand and right hand groove estimates respectively:
+- The output of each function is an x-location in microns 
+
+- Each test set tends to have an optimal adjust value denoted as $\alpha$ that improve groove estimates
+
+- Resulting in the following left hand and right hand groove estimates respectively:
 
 - $\gamma_{lh} = (x_b -1)*r_s + m_y*y_{i} + \alpha$
 -  $\gamma_{rh} = (x_b -1)*r_s + m_y*y_{i} - \alpha$
+
+.footnote[
+$r_s$ is the resolution of the x3p-scan
+]
+
+---
+# Visualizing Hough Estimates
+
+- We can visualize our Hough estimate over the entirety of a bullet land using the `get_mask_hough` function in GrooveFinder 
+
+- This creates a coloured visual mask of the left and right side groove estimates on our x3p-scan
+
+```{r get-mask-hough-example, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Hough groove estimate visualized over whole of bullet land with adjust set to 120"}
+include_graphics('../images/mask-example.png')
+
+```
 
 
 ---
@@ -443,7 +471,31 @@ class: inverse, center, middle
 #Results
 
 ---
-# Phoenix PD Set
+#Results
+
+For a point of comparison we will be comparing the following methods to manually identified groove locations:
+
+- Hough Transform Method
+- Rollapply Method
+
+The reason for this is to see how our new method of groove identification measures up to tools that are already in practice [7]
+
+.footnote[
+[7] `r RefManageR::Citet(myBib,1)`
+]
+---
+
+
+#Imputing NAs
+
+
+```{r five-percent-imputed, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 3, fig.cap= "Bullet Land with missing values imputed"}
+include_graphics('../images/fill-na-example.png')
+```
+
+
+---
+# Phoenix PD Set Density Plot
 
 ```{r phnx-density, eval = TRUE, echo = FALSE, fig.align= 'center', warning = FALSE, fig.height= 4, dpi = 300}
 
@@ -470,8 +522,11 @@ phoenix.df %>%
 
 ---
 
+# Phoenix PD Set Box Plots 
+
 ```{r phnx-bw, eval = TRUE, echo = FALSE, fig.align= 'center', warning = FALSE, fig.height= 4, dpi = 300}
 phoenix.df %>%
+  dplyr::mutate(score = score + 1) %>%
   ggplot()+
   geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
   scale_fill_manual(values = c("orange", "deepskyblue1")) +
@@ -480,7 +535,15 @@ phoenix.df %>%
 ```
 
 ---
-# Hamby Set 44
+
+.center2[
+```{r phoenix-table, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 6}
+include_graphics('../images/phoenix-table.png')
+```
+]
+
+---
+# Hamby Set 44 Density Plots
 
 ```{r hamby-density, eval = TRUE, echo = FALSE, fig.align= 'center', warning = FALSE, fig.height= 4, dpi = 300}
 #load in saved results data
@@ -505,8 +568,11 @@ hamby44.df %>%
 ```
 
 ---
+# Hamby Set 44 Box plots
+
 ```{r hamby-bp, eval = TRUE, echo = FALSE, warning = FALSE, fig.align= 'center', fig.height= 4, dpi = 300}
 hamby44.df %>%
+  dplyr::mutate(score = score + 1) %>%
   ggplot()+
   geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
   scale_fill_manual(values = c("orange", "deepskyblue1")) +
@@ -514,6 +580,36 @@ hamby44.df %>%
   facet_grid(~groove_chirality) 
 
 ```
+
+---
+
+.center2[
+```{r hamby-table, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height = 6}
+include_graphics('../images/hamby-table.png')
+```
+]
+
+
+---
+# Conclusion
+
+- Overall, the Hough transform yields a slight improvement in groove identification over previously established methods
+
+--
+
+- This improvement however varies slightly depending on which groove is under consideration
+
+--
+
+- AOM scores tend to be slightly biased in favour of the rollapply method
+
+--
+
+- The merits of the Hough method lie in its simplicity and ability to use information from the entirety of the bullet land
+
+---
+class: inverse, center, middle
+#Questions?
 
 
 ---

@@ -565,7 +565,7 @@ In order to assess the effectiveness of the Hough Transform method we will use t
 \item Rollapply
 \end{enumerate}
 
-Scores were obtained for two different bullet test sets, the Phoenix PD set, and the Hamby 44 set. Due to the sheer size of the individual x3p files in each set, scores were obtained for each file one at a time. An x3p file would be read into local memory and three different groove locations would be calculated for each method identified above. Then a robust LOESS is fit to the x3p file to remove bullet curvature and signatures are extracted. The area of misidentification in microns is calculated for each of the three methods for each groove (left and right) and stored in the form of a dataset. This process is repeated for every file in the test set, where scores are stored and appended into a large dataframe of scores, groove locations, manual identification locations, and bullet identifications. Ideally, well identified grooves should have an area of misidentification close to zero for both the left and right grooves. 
+Scores were obtained for two different bullet test sets, the Phoenix PD set, and the Hamby 44 set. Due to the sheer size of the individual x3p files in each set, scores were obtained for each file one at a time. An x3p file would be read into local memory and two different groove locations would be calculated for each method identified above. Then a robust LOESS is fit to the x3p file to remove bullet curvature and signatures are extracted. The area of misidentification in $\text{microns}^2$ is calculated for each of the two methods for each groove (left and right) and stored in the form of a dataset. This process is repeated for every file in the test set, where scores are stored and appended into a large dataframe of scores, groove locations, manual identification locations, and bullet identifications. Ideally, well identified grooves should have an area of misidentification close to zero for both the left and right grooves. 
 
 To improve the accuracy of the Hough transform, we have decide to impute areas of missing information in bullet lands. Missing information in the land is filled in with a value that is 5\% greater than the maximum height value detected in the bullet land.
 
@@ -592,10 +592,10 @@ include_graphics('../images/fill-na-example.png')
 @
  
  
-Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the Phoenix PD set in Figure \ref{fig: phoenix-score-dist-density}. For the left groove we can see that the Hough method has a much larger accumulation of well-specified grooves than that of the Rollapply since most Hough scores are clustered at lower values. For the right-hand groove, both methods appear to have a large number of scores clustered at lower values. However, for both left and right groove locations the Hough method has a lower spread of AOM scores than that of the Rollapply method.
+Below we present the distribution of area of misidentification(AOM) scores for Hough and Rollapply estimates for the Phoenix PD set in Figure \ref{fig:phoenix-score-dist-density}. For the left groove we can see that the Hough method has a much larger accumulation of well-specified grooves than that of the Rollapply since most Hough scores are clustered at lower values. For the right-hand groove, both methods appear to have a large number of scores clustered at lower values. However, for both left and right groove locations the Hough method has a lower spread of AOM scores than that of the Rollapply method.
 
 
-This conclusion is further emphasize in Figure \ref{fig: phoenix-score-dist-bp}Hough where we have log transformed AOM scores shown as boxplots. Smaller logged scores indicate a more accurate identification of groove locations. For both the right and left-hand grooves for this set we see that the Hough method has a smaller spread in logged AOM scores than the Rollapply method. For the left hand groove, the Hough method appears to have a lower median logged AOM score than the Rollapply method however for the right hand side, the median logged AOM scores is slightly higher. 
+This conclusion is further emphasize in Figure \ref{fig:phoenix-score-dist-bp} where we have log transformed AOM scores shown as boxplots. Smaller logged scores indicate a more accurate identification of groove locations. For both the right and left-hand grooves for this set we see that the Hough method has a smaller spread in logged AOM scores than the Rollapply method. For the left hand groove, the Hough method appears to have a lower median logged AOM score than the Rollapply method however for the right hand side, the median logged AOM scores is slightly higher. 
 
 <<phoenix-score-dist-density, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Density Plots of AOM scores for the Phoenix PD set separated by groove side and method">>=
 
@@ -623,6 +623,7 @@ phoenix.df %>%
 <<phoenix-score-dist-bp, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Boxplots of AOM scores for the Phoenix PD set separated by groove side and method">>=
 
 phoenix.df %>%
+  dplyr::mutate(score = score + 1) %>%
   ggplot()+
   geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
   scale_fill_manual(values = c("orange", "deepskyblue1")) +
@@ -636,7 +637,7 @@ phoenix.df %>%
 
 # Create dataframe with summary statistics
 table.df <- phoenix.df %>%
-  dplyr::filter(score != 0) %>%
+  dplyr::mutate(score = score + 1) %>%
   dplyr::group_by(method, groove_chirality) %>%
   dplyr::summarise(Mean = mean(log(score), na.rm = T, ),
             Variance = var(log(score), na.rm = T),
@@ -658,16 +659,16 @@ table.df <- table.df %>%
 \begin{table}[ht!]
 \begin{tabular}{lllllll}
 \textbf{Method} & \textbf{Groove Chirality} & \textbf{Mean} & \textbf{Variance} & \textbf{Median} & \textbf{Minimum} & \textbf{Maximum} \\ \hline
-Hough           & Left                      & 5.823         & 4.833             & 5.669           & 0.294            & 10.328           \\
-Rollapply       & Left                      & 6.805         & 6.329             & 6.550           & -0.976           & 10.943           \\
-Hough           & Right                     & 5.211         & 2.493             & 5.598           & 1.054            & 8.691            \\
-Rollapply       & Right                     & 5.469         & 2.580             & 5.159           & 1.211            & 9.657            \\ \hline
+Hough           & Left                      & 5.755         & 5.131             & 5.648           & 0                & 10.328           \\
+Rollapply       & Left                      & 6.821         & 6.176             & 6.551           & 0.319            & 10.943           \\
+Hough           & Right                     & 5.045         & 3.241             & 5.515           & 0                & 8.691            \\
+Rollapply       & Right                     & 5.482         & 2.526             & 5.165           & 1.472            & 9.658            \\ \hline
 \end{tabular}
 \caption{Table of summary statistics for logged AOM scores for the Phoenix PD Set}
 \label{table:phoenix-table}
 \end{table}
 
-In the above table, we include some useful summary statistics of the logged AOM scores. In general the means and variances of both methods for each groove are consistent with the conclusions presented earlier in this section. It appears that for both the left and right groove, the Hough method has a lower average logged AOM score and a lower variance. An item of note is that ten Hough groove estimates were omitted from the above calculations because these estimates had a logged AOM score of negative infinity which corresponds to an AOM score of 0. 
+In the above table, we include some useful summary statistics of the logged AOM scores. In general the means and variances of both methods for each groove are consistent with the conclusions presented earlier in this section. It appears that for the left groove, the Hough method has a lower average logged AOM score and a lower variance. But for the right groove the Hough estimate has a lower mean, a higher median, and a higher variance. An item of note is that we added 1 to each AOM score before being logged so that AOM scores of 0 can be included in these summary statistics and box plot distributions for both the Phoenix set and the Hamby Set 44.
 
 We see similar results in the Hamby Set 44 for both the left-hand and right-hand groove estimates. In Figure~\ref{fig:hamby44-score-dist-density} we see the density distribution of AOM scores for the Hamby Set 44. For the left hand side, there appears to be a large spread of AOM scores for both the Rollapply and Hough method, however the Hough method has a slightly higher concentration of AOM scores at lower values than the Rollapply method. A similar story can be seen for the right hand groove where both method appear to have a large number of scores clustered near zero, but the Hough method has a larger density of scores at lower values.  
 
@@ -702,6 +703,7 @@ has a smaller spread of logged AOM scores and also has a lower median logged AOM
 <<hamby44-score-dist-bp, echo = FALSE, fig.align="center", message=FALSE, warning = F, fig.height=4, fig.cap = "Distribution of left-hand areas of misidentification for Hamby 44 Set">>=
 
 hamby44.df %>%
+  dplyr::mutate(score = score + 1) %>%
   ggplot()+
   geom_boxplot(aes(x = log(score), fill = method), alpha = 0.8) +
   scale_fill_manual(values = c("orange", "deepskyblue1")) +
@@ -711,15 +713,15 @@ hamby44.df %>%
   
 @
 
-In Table 2, we once again provide summary statistics of the logged AOM scores. For this set, thirty seven Hough groove estimates were omitted from the summary statistic calculations because these estimates had a logged AOM score of negative infinity (AOM score of 0). For both left and right-hand grooves, the Hough method has a lower average and standard deviation than that of the Rollapply method. However the distributions are much closer in shape and spread for the right-hand groove estimate for this particular set.
+In Table 2, we once again provide summary statistics of the logged AOM scores. For the left-hand grooves, the Hough method has a lower average and standard deviation than that of the Rollapply method. But for the right-hand groove estimate the Hough method may have alower median and mean, but it has a higher variance than that of the Rollapply method.
 
 \begin{table}[ht!]
 \begin{tabular}{lllllll}
 \textbf{Method} & \textbf{Groove Chirality} & \textbf{Mean} & \textbf{Variance} & \textbf{Median} & \textbf{Minimum} & \textbf{Maximum} \\ \hline
-Hough           & Left                      & 6.374         & 2.956             & 6.775           & 0.3613           & 9.291           \\
-Rollapply       & Left                      & 6.505         & 4.111             & 7.267           & -1.553           & 9.001           \\
-Hough           & Right                     & 5.149         & 3.856             & 5.144           & -2.561           & 10.267            \\
-Rollapply       & Right                     & 5.401         & 4.077             & 5.169           & 0.153            & 9.734            \\ \hline
+Hough           & Left                      & 6.331         & 3.188             & 6.749           & 0                & 9.291           \\
+Rollapply       & Left                      & 6.523         & 3.941             & 7.268           & 0.198            & 9.001           \\
+Hough           & Right                     & 4.702         & 5.516             & 4.874           & 0                & 10.267            \\
+Rollapply       & Right                     & 5.425         & 3.926             & 5.175           & 0.773            & 9.734            \\ \hline
 \end{tabular}
 \caption{Table of summary statistics for logged AOM scores for the Hamby Set 44}
 \label{table:hamby-table}
@@ -728,8 +730,10 @@ Rollapply       & Right                     & 5.401         & 4.077             
 <<hamby-score-table, echo = FALSE, eval = F, message=FALSE>>=
 
 # Create dataframe with summary statistics
+
+
 table.df <- hamby44.df %>%
-  dplyr::filter(score != 0) %>%
+  dplyr::mutate(score = score + 1) %>%
   dplyr::group_by(method, groove_chirality) %>%
   dplyr::summarise(Mean = mean(log(score), na.rm = T, ),
             Variance = var(log(score), na.rm = T),
